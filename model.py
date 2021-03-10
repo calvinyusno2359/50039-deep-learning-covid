@@ -5,6 +5,15 @@ import torch.nn.functional as F
 from dataset import Image_Dataset_Part
 from torch.utils.data import DataLoader
 
+
+class PrintLayer(nn.Module):
+    def __init__(self):
+        super(PrintLayer, self).__init__()
+
+    def forward(self, x):
+        print(x.shape)
+        return x
+
 class ResNet(torch.nn.Module):
     def __init__(self, module):
         super().__init__()
@@ -17,14 +26,14 @@ class ResNet(torch.nn.Module):
 if __name__ == "__main__":
     # Create model
     model = torch.nn.Sequential(
-        torch.nn.Conv2d(3, 32, kernel_size=7),
+        torch.nn.Conv2d(1, 32, kernel_size=7),
         # 32 filters in and out, no max pooling so the shapes can be added
         ResNet(
             torch.nn.Sequential(
-                torch.nn.Conv2d(32, 32, kernel_size=3),
+                torch.nn.Conv2d(32, 32, kernel_size=3,stride=1,padding=1),
                 torch.nn.ReLU(),
                 torch.nn.BatchNorm2d(32),
-                torch.nn.Conv2d(32, 32, kernel_size=3),
+                torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
                 torch.nn.ReLU(),
                 torch.nn.BatchNorm2d(32),
             )
@@ -33,16 +42,17 @@ if __name__ == "__main__":
         # Downsampling using maxpool and others could be done in between etc. etc.
         ResNet(
             torch.nn.Sequential(
-                torch.nn.Conv2d(32, 32, kernel_size=3),
+                torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
                 torch.nn.ReLU(),
                 torch.nn.BatchNorm2d(32),
-                torch.nn.Conv2d(32, 32, kernel_size=3),
+                torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
                 torch.nn.ReLU(),
                 torch.nn.BatchNorm2d(32),
             )
         ),
         # Pool all the 32 filters to 1, you may need to use `torch.squeeze after this layer`
         torch.nn.AdaptiveAvgPool2d(1),
+        torch.nn.Flatten(),
         # 32 10 classes
         torch.nn.Linear(32, 2),
     )
