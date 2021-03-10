@@ -67,8 +67,8 @@ if __name__ == "__main__":
 	optimiser = optim.Adam(model.parameters())
 
 	# check training and saving
-	train_model(model, train_loader, optimiser, 1, "./hello", True)
+	train_model(model, train_loader, optimiser, 1, "./checkpoints/hello", True)
 
 	# check loading
-	model = load_model(model, "./hello")
+	model = load_model(model, "./checkpoints/hello")
 	test_model(model, train_loader)
