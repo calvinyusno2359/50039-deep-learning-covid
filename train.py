@@ -37,6 +37,7 @@ def train(model, trainloader, epochs, device='cuda'):
 	model.train()
 	for batch_idx, (data, target) in enumerate(trainloader):
 		target = np.argmax(target, axis=1)
+		print(target)
 		data, target = data.to(device), target.to(device)
 		optimizer = optim.Adadelta(model.parameters(), lr=0.001)
 		optimizer.zero_grad()
@@ -52,14 +53,16 @@ def train(model, trainloader, epochs, device='cuda'):
 if __name__ == "__main__":
 	# set and load dataset spec
 	img_size = (150, 150)
-	class_dict = {0: 'normal', 1: 'infected'}
+	class_dict = {0: 'normal', 1: 'infected', 2:'covid'}
 	train_groups = ['train']
-	train_numbers = { 'train_normal': 36,
-											'train_infected': 34,
+	train_numbers = { 'train_normal': 1341,
+											'train_infected': 2530,
+											'train_covid': 1345
 										}
 
-	trainset_paths = { 'train_normal': './dataset_demo/train/normal/',
-										'train_infected': './dataset_demo/train/infected/',
+	trainset_paths = { 'train_normal': './dataset/train/normal/',
+										'train_infected': './dataset/train/infected/',
+										'train_covid': './dataset/train/covid/'
 									}
 
 	trainset = Image_Dataset_Part('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)

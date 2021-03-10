@@ -60,13 +60,19 @@ class Image_Dataset_Part(Image_Dataset):
 
 	def __getitem__(self, index):
 		first_val = int(list(self.dataset_numbers.values())[0])
+		second_val = int(list(self.dataset_numbers.values())[1])
 		if index < first_val:
 			class_val = 'normal'
-			label = torch.Tensor([1, 0])
-		else:
+			label = torch.Tensor([1, 0, 0])
+		elif index < (second_val + first_val) and index>=first_val:
 			class_val = 'infected'
 			index = index - first_val
-			label = torch.Tensor([0, 1])
+			label = torch.Tensor([0, 1, 0])
+		else:
+			class_val = 'covid'
+			index = index - (first_val + second_val)
+			label = torch.Tensor([0, 0, 1])
+		print(first_val,second_val,index)
 		im = self.open_img(self.groups[0], class_val, index)
 		im = transforms.functional.to_tensor(np.array(im)).float()
 		return im, label
