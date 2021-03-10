@@ -1,6 +1,9 @@
+import torch
 import numpy as np
+
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
 
 class Image_Dataset(Dataset):
 	def __init__(self, img_size, class_dict, groups, dataset_numbers, dataset_paths):
@@ -46,31 +49,46 @@ class Image_Dataset(Dataset):
 		im = self.open_img(group_val, class_val, index_val)
 		plt.imshow(im)
 
+class Image_Dataset_Part(Image_Dataset):
+	def __init__(self, title, img_size, class_dict, groups, dataset_numbers, dataset_paths):
+		super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
+		self.title = title
+
+	def __len__(self):
+		return sum(self.dataset_numbers.values())
+
+	def __getitem__(self, index):
+		first_val = int(list(self.dataset_numbers.values())[0])
+		if index < first_val:
+			class_val = 'normal'
+			label = torch.Tensor([1, 0])
+		else:
+			class_val = 'infected'
+			index = index - first_val
+			label = torch.Tensor([0, 1])
+		im = self.open_img(self.groups[0], class_val, index)
+		im = transforms.functional.to_tensor(np.array(im)).float()
+		return im, label
+
 if __name__ == "__main__":
 	dataset_path = r'./dataset_demo'
 
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
-	groups = ['train', 'test', 'val']
+	groups = ['train']
 	dataset_numbers = { 'train_normal': 36,
 											'train_infected': 34,
-											'val_normal': 4,
-											'val_infected': 4,
-											'test_normal': 14,
-											'test_infected': 13
 										}
 
 	dataset_paths = { 'train_normal': './dataset_demo/train/normal/',
 										'train_infected': './dataset_demo/train/infected/',
-										'val_normal': './dataset_demo/val/normal/',
-										'val_infected': './dataset_demo/val/infected/',
-										'test_normal': './dataset_demo/test/normal/',
-										'test_infected': './dataset_demo/test/infected/'
 									}
 
-	lung_dataset = Image_Dataset(img_size, class_dict, groups, dataset_numbers, dataset_paths)
-	print(lung_dataset.describe())
+	trainset = Image_Dataset_Part('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	trainset.describe()
+	print(len(trainset))
 
-	im = lung_dataset.open_img('train', 'normal', 1)
-	print(im.shape)
+	im, class_out = trainset[64]
 	print(im)
+	print(im.shape)
+	print(class_out)
