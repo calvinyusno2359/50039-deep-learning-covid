@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
@@ -75,20 +76,27 @@ if __name__ == "__main__":
 
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
-	groups = ['train']
+	groups = ['train', 'test', 'val']
 	dataset_numbers = { 'train_normal': 36,
 											'train_infected': 34,
+											'val_normal': 4,
+											'val_infected': 4,
+											'test_normal': 14,
+											'test_infected': 13
 										}
 
 	dataset_paths = { 'train_normal': './dataset_demo/train/normal/',
 										'train_infected': './dataset_demo/train/infected/',
+										'val_normal': './dataset_demo/val/normal/',
+										'val_infected': './dataset_demo/val/infected/',
+										'test_normal': './dataset_demo/test/normal/',
+										'test_infected': './dataset_demo/test/infected/'
 									}
 
-	trainset = Image_Dataset_Part('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
-	trainset.describe()
-	print(len(trainset))
-
-	im, class_out = trainset[64]
-	print(im)
+	dataset = Image_Dataset(img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	dataset.describe()
+	im = dataset.open_img('train', 'normal', 1)
 	print(im.shape)
-	print(class_out)
+	print(im)
+	dataset.show_img('train', 'normal', 1)
+	plt.show()
