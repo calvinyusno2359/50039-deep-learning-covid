@@ -1,5 +1,7 @@
 import time
 import torch
+import numpy as np
+import torch.nn.functional as F
 
 from model import Net
 
@@ -29,58 +31,23 @@ def validate(model, validloader, criterion, device='cuda'):
 
 	return test_loss, accuracy
 
-def train(model, trainloader, validationloader, epochs, device='cuda'):
-	for param in model.parameters():
-	    param.requires_grad = False
-
-	# Define loss function and optimizer
-	loss_function = nn.CrossEntropyLoss()
-	optimizer = optim.Adam(model.parameters(), lr = 0.001)
-
+def train(model, trainloader, epochs, device='cuda'):
+	print('training now')
 	model.to(device)
-	start = time.time()
-
-	epochs = epochs
-	steps = 0
-	running_loss = 0
-	print_every = 1
-	training_losses = []
-	for e in range(epochs):
-		model.train()
-		for images, labels in trainloader:
-			images, labels = images.to(device), labels.to(device)
-
-			steps += 1
-
-			optimizer.zero_grad()
-
-			output = model.forward(images)
-			loss = loss_function(output, labels)
-			loss.backward()
-			optimizer.step()
-
-			running_loss += loss.item()
-
-			if steps % print_every == 0:
-				# Eval mode for predictions
-				model.eval()
-
-				# Turn off gradients for validation
-				with torch.no_grad():
-				    test_loss, accuracy = validate(model, validationloader, criterion, device)
-
-				print("Epoch: {}/{} - ".format(e+1, epochs),
-				      "Training Loss: {:.3f} - ".format(running_loss/print_every),
-				      "Validation Loss: {:.3f} - ".format(test_loss/len(validationloader)),
-				      "Validation Accuracy: {:.3f}".format(accuracy/len(validationloader)))
-
-				running_loss = 0
-
-				model.train()
-
-	print('model:', model_name, '- hidden layers:', n_hidden, '- epochs:', n_epoch, '- lr:', lr)
-	print(f"Run time: {(time.time() - start)/60:.3f} min")
-	return model, training_losses, validation_losses
+	model.train()
+	for batch_idx, (data, target) in enumerate(trainloader):
+		target = np.argmax(target, axis=1)
+		data, target = data.to(device), target.to(device)
+		optimizer = optim.Adadelta(model.parameters(), lr=0.001)
+		optimizer.zero_grad()
+		output = model(data)
+		loss = F.nll_loss(output, target)
+		loss.backward()
+		optimizer.step()
+		if batch_idx % 2 == 0:
+			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+				epochs, batch_idx * len(data), len(trainloader.dataset),
+				100. * batch_idx / len(trainloader), loss.item()))
 
 if __name__ == "__main__":
 	# set and load dataset spec
@@ -116,4 +83,4 @@ if __name__ == "__main__":
 	epochs = 2
 	model = Net()
 
-	train(model, trainloader, validationloader, epochs)
+	train(model, trainloader, epochs)
