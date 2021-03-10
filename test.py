@@ -1,52 +1,51 @@
+import torch
 import argparse
 
+from model import Net
 from dataset import Image_Dataset_Part
 from torch.utils.data import DataLoader
 
-def predict(datapath, model, topk, device):
+def test(model, testloader, device='cuda'):
 	model.to(device)
 	model.eval()
+	accuracy = 0
 
-	img = process_image(image_path)
-	img = img.to(device)
+	# Try model on one mini-batch
+	for batch_idx, (images_data, target_labels) in enumerate(testloader):
+		images_data, target_labels = images_data.to(device), target_labels.to(device)
+		output = model(images_data)
+		predicted_labels = torch.exp(output).max(dim=1)[1]
+		equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
+		accuracy += equality.type(torch.FloatTensor).mean()
 
-	output = model.forward(img)
-	ps = torch.exp(output)
-	probs, idxs = ps.topk(topk)
+	print('Testing Accuracy: {:.3f}'.format(accuracy/len(testloader)))
 
-	idx_to_class = dict((v,k) for k, v in model.classifier.class_to_idx.items())
-	classes = [v for k, v in idx_to_class.items() if k in idxs.to('cpu').numpy()]
-
-	if cat_to_name:
-	    classes = [cat_to_name[str(i + 1)] for c, i in \
-	                 model.classifier.class_to_idx.items() if c in classes]
-
-	print('Probabilities:', probs.data.cpu().numpy()[0].tolist())
-	print('Classes:', classes)
+def get_args(argv=None):
+	parser = argparse.ArgumentParser(description="test image classifier model")
+	parser.add_argument("--batch_size", type=int, default=4, help="set batch size")
+	parser.add_argument("--gpu", action="store_const", const="cuda", default="cpu", help="use gpu")
+	return parser.parse_args(argv)
 
 if __name__ == "__main__":
+	args = get_args()
+	# set and load dataset spec
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['test']
-	dataset_numbers = { 'test_normal': 36,
-											'test_infected': 34,
+	dataset_numbers = { 'test_normal': 14,
+											'test_infected': 13,
 										}
 
 	dataset_paths = { 'test_normal': './dataset_demo/test/normal/',
 										'test_infected': './dataset_demo/test/infected/',
 									}
 
-	bs_val = 4
 	testset = Image_Dataset_Part('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
-	test_loader = DataLoader(testset, batch_size = bs_val, shuffle = True)
 
-	# Try model on one mini-batch
-	for batch_idx, (images_data, target_labels) in enumerate(test_loader):
-	    predicted_labels = model(images_data)
-	    print(predicted_labels)
-	    print(target_labels)
-	    # Forced stop
-	    break
-	    #assert False, "Forced stop after one iteration of the mini-batch for loop"
+	# load dataset
+	testloader = DataLoader(testset, batch_size = args.batch_size, shuffle = True)
 
-	print("ok")
+	# load model
+	model = Net()
+
+	test(model, testloader)
