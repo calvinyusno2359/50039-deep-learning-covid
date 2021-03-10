@@ -6,15 +6,42 @@ from dataset import Image_Dataset_Part
 from torch.utils.data import DataLoader
 
 
-class PrintLayer(nn.Module):
+class Net(nn.Module):
     def __init__(self):
-        super(PrintLayer, self).__init__()
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=7),
+            ResNet(
+                nn.Sequential(
+                    nn.Conv2d(32, 32, kernel_size=3,stride=1,padding=1),
+                    nn.ReLU(),
+                    nn.BatchNorm2d(32),
+                    nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+                    nn.ReLU(),
+                    nn.BatchNorm2d(32),
+                )
+            ),
+            ResNet(
+                nn.Sequential(
+                    nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+                    nn.ReLU(),
+                    nn.BatchNorm2d(32),
+                    nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+                    nn.ReLU(),
+                    nn.BatchNorm2d(32),
+                )
+            ),
+            nn.AdaptiveAvgPool2d(1),
+            nn.Flatten(),
+            nn.Linear(32, 2),
+        )
 
     def forward(self, x):
-        print(x.shape)
-        return x
+        x = self.layers(x)
+        output = F.log_softmax(x, dim=1)
+        return output
 
-class ResNet(torch.nn.Module):
+class ResNet(nn.Module):
     def __init__(self, module):
         super().__init__()
         self.module = module
@@ -25,37 +52,7 @@ class ResNet(torch.nn.Module):
 
 if __name__ == "__main__":
     # Create model
-    model = torch.nn.Sequential(
-        torch.nn.Conv2d(1, 32, kernel_size=7),
-        # 32 filters in and out, no max pooling so the shapes can be added
-        ResNet(
-            torch.nn.Sequential(
-                torch.nn.Conv2d(32, 32, kernel_size=3,stride=1,padding=1),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm2d(32),
-                torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm2d(32),
-            )
-        ),
-        # Another ResNet block, you could make more of them
-        # Downsampling using maxpool and others could be done in between etc. etc.
-        ResNet(
-            torch.nn.Sequential(
-                torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm2d(32),
-                torch.nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-                torch.nn.ReLU(),
-                torch.nn.BatchNorm2d(32),
-            )
-        ),
-        # Pool all the 32 filters to 1, you may need to use `torch.squeeze after this layer`
-        torch.nn.AdaptiveAvgPool2d(1),
-        torch.nn.Flatten(),
-        # 32 10 classes
-        torch.nn.Linear(32, 2),
-    )
+    model = Net()
 
     img_size = (150, 150)
     class_dict = {0: 'normal', 1: 'infected'}

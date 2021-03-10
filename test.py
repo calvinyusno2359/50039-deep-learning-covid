@@ -48,4 +48,4 @@ if __name__ == "__main__":
 	# load model
 	model = Net()
 
-	test(model, testloader)
+	test(model, testloader, "cpu")
