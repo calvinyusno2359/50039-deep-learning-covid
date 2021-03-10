@@ -1,38 +1,14 @@
-# Define classifier class
-class NN_Classifier(nn.Module):
-	def __init__(self, input_size, output_size, hidden_layers, drop_p=0.5):
-		''' Builds a feedforward network with arbitrary hidden layers.
+import time
+import torch
 
-		    Arguments
-		    ---------
-		    input_size: integer, size of the input
-		    output_size: integer, size of the output layer
-		    hidden_layers: list of integers, the sizes of the hidden layers
-		    drop_p: float between 0 and 1, dropout probability
-		'''
-		super().__init__()
-		# Add the first layer, input to a hidden layer
-		self.hidden_layers = nn.ModuleList([nn.Linear(input_size, hidden_layers[0])])
+from model import Net
 
-		# Add a variable number of more hidden layers
-		layer_sizes = zip(hidden_layers[:-1], hidden_layers[1:])
-		self.hidden_layers.extend([nn.Linear(h1, h2) for h1, h2 in layer_sizes])
+from torch import nn
+from torch import optim
+from torchvision import models
+from dataset import Image_Dataset_Part
+from torch.utils.data import DataLoader
 
-		self.output = nn.Linear(hidden_layers[-1], output_size)
-
-		self.dropout = nn.Dropout(p=drop_p)
-
-	def forward(self, x):
-		''' Forward pass through the network, returns the output logits '''
-
-		# Forward through each layer in `hidden_layers`, with ReLU activation and dropout
-		for linear in self.hidden_layers:
-			x = F.relu(linear(x))
-			x = self.dropout(x)
-
-		x = self.output(x)
-
-		return F.log_softmax(x, dim=1)
 
 def validate(model, validloader, criterion, device='cuda'):
 	model.to(device)
@@ -53,67 +29,91 @@ def validate(model, validloader, criterion, device='cuda'):
 
 	return test_loss, accuracy
 
-def train(model, train_loader, optimiser, epochs, path, saving):
-	model = getattr(models, model_name)(pretrained=True)
-
-	# Freeze parameters that we don't need to re-train
+def train(model, trainloader, validationloader, epochs, device='cuda'):
 	for param in model.parameters():
-		param.requires_grad = False
+	    param.requires_grad = False
 
-	# Make classifier
-	n_in = next(model.classifier.modules()).in_features
-	n_out = len(labelsdict)
-	model.classifier = NN_Classifier(input_size=n_in, output_size=n_out, hidden_layers=n_hidden)
-
-	# Define criterion and optimizer
-	criterion = nn.NLLLoss()
-	optimizer = optim.Adam(model.classifier.parameters(), lr = lr)
+	# Define loss function and optimizer
+	loss_function = nn.CrossEntropyLoss()
+	optimizer = optim.Adam(model.parameters(), lr = 0.001)
 
 	model.to(device)
 	start = time.time()
 
-	epochs = n_epoch
+	epochs = epochs
 	steps = 0
 	running_loss = 0
-	print_every = 40
-	training_losses = [] ### RECORD TRAINING LOSSES
-	validation_losses = [] ### RECORD VALIDATION LOSSES
+	print_every = 1
+	training_losses = []
 	for e in range(epochs):
-	    model.train()
-	    for images, labels in trainloader:
-	        images, labels = images.to(device), labels.to(device)
+		model.train()
+		for images, labels in trainloader:
+			images, labels = images.to(device), labels.to(device)
 
-	        steps += 1
+			steps += 1
 
-	        optimizer.zero_grad()
+			optimizer.zero_grad()
 
-	        output = model.forward(images)
-	        loss = criterion(output, labels)
-	        loss.backward()
-	        optimizer.step()
+			output = model.forward(images)
+			loss = loss_function(output, labels)
+			loss.backward()
+			optimizer.step()
 
-	        running_loss += loss.item()
+			running_loss += loss.item()
 
-	        if steps % print_every == 0:
-	            # Eval mode for predictions
-	            model.eval()
+			if steps % print_every == 0:
+				# Eval mode for predictions
+				model.eval()
 
-	            # Turn off gradients for validation
-	            with torch.no_grad():
-	                test_loss, accuracy = validate(model, validloader, criterion, device)
-	                training_losses.append(running_loss/print_every) ### RECORD TRAINING LOSSES
-	                validation_losses.append(test_loss/len(validloader)) ### RECORD VALIDATION LOSSES
+				# Turn off gradients for validation
+				with torch.no_grad():
+				    test_loss, accuracy = validate(model, validationloader, criterion, device)
 
-	            print("Epoch: {}/{} - ".format(e+1, epochs),
-	                  "Training Loss: {:.3f} - ".format(running_loss/print_every),
-	                  "Validation Loss: {:.3f} - ".format(test_loss/len(validloader)),
-	                  "Validation Accuracy: {:.3f}".format(accuracy/len(validloader)))
+				print("Epoch: {}/{} - ".format(e+1, epochs),
+				      "Training Loss: {:.3f} - ".format(running_loss/print_every),
+				      "Validation Loss: {:.3f} - ".format(test_loss/len(validationloader)),
+				      "Validation Accuracy: {:.3f}".format(accuracy/len(validationloader)))
 
-	            running_loss = 0
+				running_loss = 0
 
-	            # Make sure training is back on
-	            model.train()
+				model.train()
 
 	print('model:', model_name, '- hidden layers:', n_hidden, '- epochs:', n_epoch, '- lr:', lr)
 	print(f"Run time: {(time.time() - start)/60:.3f} min")
 	return model, training_losses, validation_losses
+
+if __name__ == "__main__":
+	# set and load dataset spec
+	img_size = (150, 150)
+	class_dict = {0: 'normal', 1: 'infected'}
+	train_groups = ['train']
+	train_numbers = { 'train_normal': 36,
+											'train_infected': 34,
+										}
+
+	trainset_paths = { 'train_normal': './dataset_demo/train/normal/',
+										'train_infected': './dataset_demo/train/infected/',
+									}
+
+	trainset = Image_Dataset_Part('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+
+	val_groups = ['val']
+	val_numbers = { 'val_normal': 4,
+											'val_infected': 4,
+										}
+
+	valset_paths = { 'val_normal': './dataset_demo/val/normal/',
+										'val_infected': './dataset_demo/val/infected/',
+									}
+
+	valset = Image_Dataset_Part('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+
+	# load dataset
+	batch_size = 4
+	trainloader = DataLoader(trainset, batch_size = batch_size, shuffle = True)
+	validationloader = DataLoader(valset, batch_size = batch_size, shuffle = True)
+
+	epochs = 2
+	model = Net()
+
+	train(model, trainloader, validationloader, epochs)
