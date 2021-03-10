@@ -71,7 +71,7 @@ class Image_Dataset_Part(Image_Dataset):
 		return im, label
 
 if __name__ == "__main__":
-	dataset_path = r'./dataset_demo'
+	dataset_path = './dataset_demo'
 
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
