@@ -3,9 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from PIL import Image
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
-
 
 class ImageDataset(Dataset):
 	def __init__(self, img_size, class_dict, groups, dataset_numbers, dataset_paths):
@@ -52,7 +51,7 @@ class ImageDataset(Dataset):
 		plt.imshow(im)
 
 
-class TrinaryDatasetPart(ImageDataset):
+class TrinaryClassDataset(ImageDataset):
 	def __init__(self, title, img_size, class_dict, groups, dataset_numbers, dataset_paths):
 		super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
 		self.title = title
@@ -80,7 +79,7 @@ class TrinaryDatasetPart(ImageDataset):
 		im = transforms.functional.to_tensor(np.array(im)).float()
 		return im, label
 
-class BinaryDatasetPart(ImageDataset):
+class BinaryClassDataset(ImageDataset):
 	def __init__(self, title, img_size, class_dict, groups, dataset_numbers, dataset_paths):
 		super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
 		self.title = title
@@ -98,7 +97,7 @@ class BinaryDatasetPart(ImageDataset):
 			class_val = 'infected'
 			index = index - first_val
 			label = torch.Tensor([0, 1])
-		im = self.open_img(self.groups, class_val, index)
+		im = self.open_img(self.groups[0], class_val, index)
 		im = transforms.functional.to_tensor(np.array(im)).float()
 		return im, label
 

@@ -8,7 +8,7 @@ from model import Net, DenseNet
 from torch import nn
 from torch import optim
 from torchvision import models
-from dataset import Image_Dataset_Part
+from dataset import TrinaryClassDatasetPart
 from torch.utils.data import DataLoader
 
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 	# 									'train_covid': './dataset/train/infected/covid/'
 	# 								}
 
-	# trainset = Image_Dataset_Part('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	# trainset = TrinaryClassDatasetPart('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
 	# val_groups = ['val']
 	# val_numbers = { 'val_normal': 4,
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 	# 									'val_infected': './dataset_demo/val/infected/',
 	# 								}
 
-	# valset = Image_Dataset_Part('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	# valset = TrinaryClassDatasetPart('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
 	# # load dataset
 	# batch_size = 4
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 	                  'train_covid': './dataset/train/infected/covid'
 	                  }
 
-	trainset = Image_Dataset_Part('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset = TrinaryClassDatasetPart('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
 	val_groups = ['val']
 	val_numbers = {'val_normal': 234,
@@ -132,7 +132,7 @@ if __name__ == "__main__":
 	                'val_covid': './dataset/test/infected/covid',
 	                }
 
-	valset = Image_Dataset_Part('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset = TrinaryClassDatasetPart('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
 	# load dataset
 	batch_size = 4
