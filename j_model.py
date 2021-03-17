@@ -51,8 +51,7 @@ if __name__ == "__main__":
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train']
 	dataset_numbers = { 'train_normal': 36,
-											'train_infected': 34,
-										}
+						'train_infected': 34,}
 
 	dataset_paths = { 'train_normal': './dataset_demo/train/normal/',
 										'train_infected': './dataset_demo/train/infected/',

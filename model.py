@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dataset import Image_Dataset_Part
+from dataset import TrinaryClassDataset
 from torch.utils.data import DataLoader
 
 
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self, numberOfOutputLabels=3):
         super().__init__()
         self.layers = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False),
@@ -28,11 +28,12 @@ class Net(nn.Module):
             # PrintLayer(),
             nn.Flatten(),
             # PrintLayer(),
-            nn.Linear(256, 3),
         )
+        self.fc = nn.Linear(256, numberOfOutputLabels)
 
     def forward(self, x):
         x = self.layers(x)
+        x = self.fc(x)
         output = F.log_softmax(x, dim=1)
         return output
 
@@ -93,9 +94,12 @@ class PrintLayer(nn.Module):
         return x
 
 
+
 if __name__ == "__main__":
     # Create model
-    model = Net()
+
+    # for 2 class
+    model = Net(numberOfOutputLabels=3)
 
     img_size = (150, 150)
     class_dict = {0: 'normal', 1: 'infected'}
@@ -109,7 +113,7 @@ if __name__ == "__main__":
                      }
 
     bs_val = 4
-    ld_train = Image_Dataset_Part('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+    ld_train = TrinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
     train_loader = DataLoader(ld_train, batch_size=bs_val, shuffle=True)
 
     # Try model on one mini-batch
