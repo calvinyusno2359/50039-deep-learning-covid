@@ -61,8 +61,8 @@ if __name__ == "__main__":
 										}
 
 	trainset_paths = { 'train_normal': './dataset/train/normal/',
-										'train_infected': './dataset/train/infected/',
-										'train_covid': './dataset/train/covid/'
+										'train_infected': './dataset/train/infected/non-covid/',
+										'train_covid': './dataset/train/infected/covid/'
 									}
 
 	trainset = Image_Dataset_Part('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)

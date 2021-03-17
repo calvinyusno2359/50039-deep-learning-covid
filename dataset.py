@@ -64,7 +64,7 @@ class Image_Dataset_Part(Image_Dataset):
 		if index < first_val:
 			class_val = 'normal'
 			label = torch.Tensor([1, 0, 0])
-		elif index < (second_val + first_val) and index>=first_val:
+		elif index < (second_val + first_val):
 			class_val = 'infected'
 			index = index - first_val
 			label = torch.Tensor([0, 1, 0])
