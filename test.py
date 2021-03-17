@@ -5,6 +5,7 @@ from model import Net
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 
+
 def test(model, testloader, device='cuda'):
 	model.to(device)
 	model.eval()
@@ -25,7 +26,7 @@ def get_args(argv=None):
 	parser = argparse.ArgumentParser(description="test image classifier model")
 	parser.add_argument("--output_var", type=int, default=2, help="number of output variables")
 	parser.add_argument("--batch_size", type=int, default=4, help="set batch size")
-	parser.add_argument("--gpu", action="store_const", const="cuda", default="cpu", help="use gpu")
+	parser.add_argument("--gpu", action="store_const", const="cuda", default="cuda", help="use gpu")
 	parser.add_argument("--load_from", type=str, help="specify path")
 	return parser.parse_args(argv)
 
