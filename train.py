@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 
-from model import Net, DenseNet
+from model import Net
 
 from torch import nn
 from torch import optim
