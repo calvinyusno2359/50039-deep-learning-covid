@@ -149,3 +149,4 @@ if __name__ == "__main__":
 	for epoch in range(1, epochs + 1):
 	    train(model, trainloader, epoch)
 	    validate(model, validationloader)
+	    torch.save(model.state_dict(), 'models/binaryModel')

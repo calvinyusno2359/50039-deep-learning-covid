@@ -39,10 +39,9 @@ if __name__ == "__main__":
 	                   'test_infected': 13,
 	                   }
 
-	dataset_paths = {'test_normal': './dataset/test/infected/non-covid',
-	                 'test_infected': './dataset/test/infected/covid',
+	dataset_paths = {'test_normal': './dataset_demo/test/normal/',
+	                 'test_infected': './dataset_demo/test/infected/',
 	                 }
-
 	# load dataset
 	testset = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 	testloader = DataLoader(testset, batch_size=args.batch_size, shuffle=True)
