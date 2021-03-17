@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 
 class Net(nn.Module):
-    def __init__(self, numberOfOutputLabels):
+    def __init__(self, numberOfOutputLabels=2):
         super().__init__()
         self.layers = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=7, padding=3, bias=False),

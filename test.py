@@ -23,8 +23,10 @@ def test(model, testloader, device='cuda'):
 
 def get_args(argv=None):
 	parser = argparse.ArgumentParser(description="test image classifier model")
+	parser.add_argument("--output_var", type=int, default=2, help="number of output variables")
 	parser.add_argument("--batch_size", type=int, default=4, help="set batch size")
 	parser.add_argument("--gpu", action="store_const", const="cuda", default="cpu", help="use gpu")
+	parser.add_argument("--load_from", type=str, help="specify path")
 	return parser.parse_args(argv)
 
 if __name__ == "__main__":
@@ -37,16 +39,17 @@ if __name__ == "__main__":
 	                   'test_infected': 13,
 	                   }
 
-	dataset_paths = {'test_normal': './dataset_demo/test/normal/',
-	                 'test_infected': './dataset_demo/test/infected/',
+	dataset_paths = {'test_normal': './dataset/test/infected/non-covid',
+	                 'test_infected': './dataset/test/infected/covid',
 	                 }
 
-	testset = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
-
 	# load dataset
+	testset = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 	testloader = DataLoader(testset, batch_size=args.batch_size, shuffle=True)
 
 	# load model
 	model = Net()
+	if args.load_from is not None:
+		model.load_state_dict(torch.load(args.load_from))
 
 	test(model, testloader)
