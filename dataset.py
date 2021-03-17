@@ -64,14 +64,14 @@ class TrinaryClassDataset(ImageDataset):
 		# pre = index
 		second_val = int(list(self.dataset_numbers.values())[1])
 		if index < first_val:
-			class_val = 'normal'
+			class_val = class_dict[0]
 			label = torch.Tensor([1, 0, 0])
 		elif first_val <= index < (second_val + first_val):
-			class_val = 'infected'
+			class_val = class_dict[1]
 			index = index - first_val
 			label = torch.Tensor([0, 1, 0])
 		else:
-			class_val = 'covid'
+			class_val = class_dict[2]
 			index = index - (first_val + second_val)
 			label = torch.Tensor([0, 0, 1])
 		# print(pre, index)
@@ -91,10 +91,10 @@ class BinaryClassDataset(ImageDataset):
 		# Get item special method
 		first_val = int(list(self.dataset_numbers.values())[0])
 		if index < first_val:
-			class_val = 'infected'
+			class_val = class_dict[0]
 			label = torch.Tensor([1, 0])
 		else:
-			class_val = 'covid'
+			class_val = class_dict[1]
 			index = index - first_val
 			label = torch.Tensor([0, 1])
 		im = self.open_img(self.groups[0], class_val, index)

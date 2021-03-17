@@ -114,24 +114,24 @@ def train(model, trainloader, epoch, device='cuda'):
 if __name__ == "__main__":
 	# set and load dataset spec
 	img_size = (150, 150)
-	class_dict = {1: 'infected', 2: 'covid'}
+	class_dict = {0: 'non-covid', 1: 'covid'}
 	train_groups = ['train']
-	train_numbers = {'train_infected': 2530,
+	train_numbers = {'train_non_covid': 2530,
 	                 'train_covid': 1345
 	                 }
 
-	trainset_paths = {'train_infected': './dataset/train/infected/non-covid',
+	trainset_paths = {'train_non_covid': './dataset/train/infected/non-covid',
 	                  'train_covid': './dataset/train/infected/covid'
 	                  }
 
 	trainset = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
 	val_groups = ['val']
-	val_numbers = {'val_infected': 242,
+	val_numbers = {'val_non_covid': 242,
 	               'val_covid': 139,
 	               }
 
-	valset_paths = {'val_infected': './dataset/test/infected/non-covid',
+	valset_paths = {'val_non_covid': './dataset/test/infected/non-covid',
 	                'val_covid': './dataset/test/infected/covid',
 	                }
 
@@ -147,5 +147,5 @@ if __name__ == "__main__":
 	model = Net(3)
 
 	for epoch in range(1, epochs + 1):
-	    train(model, trainloader, epoch, device="cpu")
-	    validate(model, validationloader, device="cpu")
+	    train(model, trainloader, epoch)
+	    validate(model, validationloader)
