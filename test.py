@@ -3,7 +3,7 @@ import argparse
 
 from model import Net
 from dataset import BinaryClassDataset, TrinaryClassDataset
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 
 def test(model, testloader, device='cuda'):
 	model.to(device)
@@ -33,18 +33,34 @@ if __name__ == "__main__":
 	args = get_args()
 	# set and load dataset spec
 	img_size = (150, 150)
-	class_dict = {0: 'normal', 1: 'infected'}
+	class_dict = {0: 'normal', 1:'infected'}
 	groups = ['test']
-	dataset_numbers = {'test_normal': 14,
-	                   'test_infected': 13,
+	dataset_numbers = {'test_normal': 234,
+	                   'test_infected': 242,
 	                   }
 
-	dataset_paths = {'test_normal': './dataset_demo/test/normal/',
-	                 'test_infected': './dataset_demo/test/infected/',
+	dataset_paths = {'test_normal': './dataset/test/normal/',
+	                 'test_infected': './dataset/test/infected/non-covid',
 	                 }
+
+	testset1 = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+
+	img_size = (150, 150)
+	class_dict = {0: 'normal', 1:'infected'}
+	groups = ['test']
+	dataset_numbers = {'test_normal': 234,
+	                   'test_infected': 138,
+	                   }
+
+	dataset_paths = {'test_normal': './dataset/test/normal/',
+	                 'test_infected': './dataset/test/infected/covid',
+	                 }
+
+	testset2 = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+
 	# load dataset
-	testset = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
-	testloader = DataLoader(testset, batch_size=args.batch_size, shuffle=True)
+	testsets = ConcatDataset([testset1, testset2])
+	testloader = DataLoader(testsets, batch_size=args.batch_size, shuffle=True)
 
 	# load model
 	model = Net()
