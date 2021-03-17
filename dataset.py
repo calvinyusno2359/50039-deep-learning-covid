@@ -91,10 +91,10 @@ class BinaryClassDataset(ImageDataset):
 		# Get item special method
 		first_val = int(list(self.dataset_numbers.values())[0])
 		if index < first_val:
-			class_val = 'normal'
+			class_val = 'infected'
 			label = torch.Tensor([1, 0])
 		else:
-			class_val = 'infected'
+			class_val = 'covid'
 			index = index - first_val
 			label = torch.Tensor([0, 1])
 		im = self.open_img(self.groups[0], class_val, index)

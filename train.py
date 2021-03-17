@@ -8,7 +8,7 @@ from model import Net, DenseNet
 from torch import nn
 from torch import optim
 from torchvision import models
-from dataset import TrinaryClassDataset
+from dataset import TrinaryClassDataset, BinaryClassDataset
 from torch.utils.data import DataLoader
 
 
@@ -67,45 +67,85 @@ def train(model, trainloader, epoch, device='cuda'):
 		               100. * batch_idx / len(trainloader), loss.item()))
 
 
+# if __name__ == "__main__":
+# 	# set and load dataset spec
+# 	img_size = (150, 150)
+# 	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
+# 	train_groups = ['train']
+# 	train_numbers = {'train_normal': 1341,
+# 	                 'train_infected': 2530,
+# 	                 'train_covid': 1345
+# 	                 }
+#
+# 	trainset_paths = {'train_normal': './dataset/train/normal',
+# 	                  'train_infected': './dataset/train/infected/non-covid',
+# 	                  'train_covid': './dataset/train/infected/covid'
+# 	                  }
+#
+# 	trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+#
+# 	val_groups = ['val']
+# 	val_numbers = {'val_normal': 234,
+# 	               'val_infected': 242,
+# 	               'val_covid': 139,
+# 	               }
+#
+# 	valset_paths = {'val_normal': './dataset/test/normal/',
+# 	                'val_infected': './dataset/test/infected/non-covid',
+# 	                'val_covid': './dataset/test/infected/covid',
+# 	                }
+#
+# 	valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+#
+# 	# load dataset
+# 	batch_size = 4
+# 	trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
+# 	validationloader = DataLoader(valset, batch_size=batch_size, shuffle=True)
+#
+# 	epochs = 5
+# 	# model = DenseNet(3) #39%
+# 	model = Net(3)
+#
+# 	for epoch in range(1, epochs + 1):
+# 	    train(model, trainloader, epoch, device="cpu")
+# 	    validate(model, validationloader, device="cpu")
+
+
 if __name__ == "__main__":
 	# set and load dataset spec
 	img_size = (150, 150)
-	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
+	class_dict = {1: 'infected', 2: 'covid'}
 	train_groups = ['train']
-	train_numbers = {'train_normal': 1341,
-	                 'train_infected': 2530,
+	train_numbers = {'train_infected': 2530,
 	                 'train_covid': 1345
 	                 }
 
-	trainset_paths = {'train_normal': './dataset/train/normal',
-	                  'train_infected': './dataset/train/infected/non-covid',
+	trainset_paths = {'train_infected': './dataset/train/infected/non-covid',
 	                  'train_covid': './dataset/train/infected/covid'
 	                  }
 
-	trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
 	val_groups = ['val']
-	val_numbers = {'val_normal': 234,
-	               'val_infected': 242,
+	val_numbers = {'val_infected': 242,
 	               'val_covid': 139,
 	               }
 
-	valset_paths = {'val_normal': './dataset/test/normal/',
-	                'val_infected': './dataset/test/infected/non-covid',
+	valset_paths = {'val_infected': './dataset/test/infected/non-covid',
 	                'val_covid': './dataset/test/infected/covid',
 	                }
 
-	valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
 	# load dataset
 	batch_size = 4
 	trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
 	validationloader = DataLoader(valset, batch_size=batch_size, shuffle=True)
 
-	epochs = 5
+	epochs = 1
 	# model = DenseNet(3) #39%
-	model = Net()
+	model = Net(3)
 
 	for epoch in range(1, epochs + 1):
-	    train(model, trainloader, epoch)
-	    validate(model, validationloader)
+	    train(model, trainloader, epoch, device="cpu")
+	    validate(model, validationloader, device="cpu")
