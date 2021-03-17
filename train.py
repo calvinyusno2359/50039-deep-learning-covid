@@ -142,7 +142,7 @@ if __name__ == "__main__":
 	trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
 	validationloader = DataLoader(valset, batch_size=batch_size, shuffle=True)
 
-	epochs = 1
+	epochs = 5
 	# model = DenseNet(3) #39%
 	model = Net(3)
 
