@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 
-class Image_Dataset(Dataset):
+class ImageDataset(Dataset):
 	def __init__(self, img_size, class_dict, groups, dataset_numbers, dataset_paths):
 		self.img_size = img_size
 		self.classes = class_dict
@@ -52,14 +52,13 @@ class Image_Dataset(Dataset):
 		plt.imshow(im)
 
 
-class Image_Dataset_Part(Image_Dataset):
-
+class TrinaryDatasetPart(ImageDataset):
 	def __init__(self, title, img_size, class_dict, groups, dataset_numbers, dataset_paths):
-	    super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
-	    self.title = title
+		super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
+		self.title = title
 
 	def __len__(self):
-	    return sum(self.dataset_numbers.values())
+		return sum(self.dataset_numbers.values())
 
 	def __getitem__(self, index):
 		first_val = int(list(self.dataset_numbers.values())[0])
@@ -78,6 +77,28 @@ class Image_Dataset_Part(Image_Dataset):
 			label = torch.Tensor([0, 0, 1])
 		# print(pre, index)
 		im = self.open_img(self.groups[0], class_val, index)
+		im = transforms.functional.to_tensor(np.array(im)).float()
+		return im, label
+
+class BinaryDatasetPart(ImageDataset):
+	def __init__(self, title, img_size, class_dict, groups, dataset_numbers, dataset_paths):
+		super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
+		self.title = title
+
+	def __len__(self):
+		return sum(self.dataset_numbers.values())
+
+	def __getitem__(self, index):
+		# Get item special method
+		first_val = int(list(self.dataset_numbers.values())[0])
+		if index < first_val:
+			class_val = 'normal'
+			label = torch.Tensor([1, 0])
+		else:
+			class_val = 'infected'
+			index = index - first_val
+			label = torch.Tensor([0, 1])
+		im = self.open_img(self.groups, class_val, index)
 		im = transforms.functional.to_tensor(np.array(im)).float()
 		return im, label
 
@@ -103,7 +124,7 @@ if __name__ == "__main__":
 	                 'test_infected': './dataset_demo/test/infected/'
 	                 }
 
-	dataset = Image_Dataset(img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	dataset = ImageDataset(img_size, class_dict, groups, dataset_numbers, dataset_paths)
 	dataset.describe()
 	im = dataset.open_img('train', 'normal', 1)
 	print(im.shape)
