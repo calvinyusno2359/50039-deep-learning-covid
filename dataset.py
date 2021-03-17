@@ -6,6 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
+
 class Image_Dataset(Dataset):
 	def __init__(self, img_size, class_dict, groups, dataset_numbers, dataset_paths):
 		self.img_size = img_size
@@ -42,7 +43,7 @@ class Image_Dataset(Dataset):
 		path_to_file = f'{dataset_path}/{index_val}.jpg'
 
 		with open(path_to_file, 'rb') as f:
-			im = np.asarray(Image.open(f)) / 255
+		    im = np.asarray(Image.open(f)) / 255
 		f.close()
 		return im
 
@@ -50,21 +51,24 @@ class Image_Dataset(Dataset):
 		im = self.open_img(group_val, class_val, index_val)
 		plt.imshow(im)
 
+
 class Image_Dataset_Part(Image_Dataset):
+
 	def __init__(self, title, img_size, class_dict, groups, dataset_numbers, dataset_paths):
-		super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
-		self.title = title
+	    super().__init__(img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	    self.title = title
 
 	def __len__(self):
-		return sum(self.dataset_numbers.values())
+	    return sum(self.dataset_numbers.values())
 
 	def __getitem__(self, index):
 		first_val = int(list(self.dataset_numbers.values())[0])
+		# pre = index
 		second_val = int(list(self.dataset_numbers.values())[1])
 		if index < first_val:
 			class_val = 'normal'
 			label = torch.Tensor([1, 0, 0])
-		elif index < (second_val + first_val):
+		elif first_val <= index < (second_val + first_val):
 			class_val = 'infected'
 			index = index - first_val
 			label = torch.Tensor([0, 1, 0])
@@ -72,7 +76,7 @@ class Image_Dataset_Part(Image_Dataset):
 			class_val = 'covid'
 			index = index - (first_val + second_val)
 			label = torch.Tensor([0, 0, 1])
-		print(first_val,second_val,index)
+		# print(pre, index)
 		im = self.open_img(self.groups[0], class_val, index)
 		im = transforms.functional.to_tensor(np.array(im)).float()
 		return im, label
@@ -83,21 +87,21 @@ if __name__ == "__main__":
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train', 'test', 'val']
-	dataset_numbers = { 'train_normal': 36,
-											'train_infected': 34,
-											'val_normal': 4,
-											'val_infected': 4,
-											'test_normal': 14,
-											'test_infected': 13
-										}
+	dataset_numbers = {'train_normal': 36,
+	                   'train_infected': 34,
+	                   'val_normal': 4,
+	                   'val_infected': 4,
+	                   'test_normal': 14,
+	                   'test_infected': 13
+	                   }
 
-	dataset_paths = { 'train_normal': './dataset_demo/train/normal/',
-										'train_infected': './dataset_demo/train/infected/',
-										'val_normal': './dataset_demo/val/normal/',
-										'val_infected': './dataset_demo/val/infected/',
-										'test_normal': './dataset_demo/test/normal/',
-										'test_infected': './dataset_demo/test/infected/'
-									}
+	dataset_paths = {'train_normal': './dataset_demo/train/normal/',
+	                 'train_infected': './dataset_demo/train/infected/',
+	                 'val_normal': './dataset_demo/val/normal/',
+	                 'val_infected': './dataset_demo/val/infected/',
+	                 'test_normal': './dataset_demo/test/normal/',
+	                 'test_infected': './dataset_demo/test/infected/'
+	                 }
 
 	dataset = Image_Dataset(img_size, class_dict, groups, dataset_numbers, dataset_paths)
 	dataset.describe()
