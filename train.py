@@ -8,7 +8,7 @@ from model import Net, DenseNet
 from torch import nn
 from torch import optim
 from torchvision import models
-from dataset import TrinaryClassDatasetPart
+from dataset import TrinaryClassDataset
 from torch.utils.data import DataLoader
 
 
@@ -68,43 +68,6 @@ def train(model, trainloader, epoch, device='cuda'):
 
 
 if __name__ == "__main__":
-	# # set and load dataset spec
-	# img_size = (150, 150)
-	# class_dict = {0: 'normal', 1: 'infected', 2:'covid'}
-	# train_groups = ['train']
-	# train_numbers = { 'train_normal': 1341,
-	# 										'train_infected': 2530,
-	# 										'train_covid': 1345
-	# 									}
-
-	# trainset_paths = { 'train_normal': './dataset/train/normal/',
-	# 									'train_infected': './dataset/train/infected/non-covid/',
-	# 									'train_covid': './dataset/train/infected/covid/'
-	# 								}
-
-	# trainset = TrinaryClassDatasetPart('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
-
-	# val_groups = ['val']
-	# val_numbers = { 'val_normal': 4,
-	# 										'val_infected': 4,
-	# 									}
-
-	# valset_paths = { 'val_normal': './dataset_demo/val/normal/',
-	# 									'val_infected': './dataset_demo/val/infected/',
-	# 								}
-
-	# valset = TrinaryClassDatasetPart('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
-
-	# # load dataset
-	# batch_size = 4
-	# trainloader = DataLoader(trainset, batch_size = batch_size, shuffle = True)
-	# validationloader = DataLoader(valset, batch_size = batch_size, shuffle = True)
-
-	# epochs = 2
-	# model = Net()
-
-	# train(model, trainloader, epochs)
-
 	# set and load dataset spec
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
@@ -119,7 +82,7 @@ if __name__ == "__main__":
 	                  'train_covid': './dataset/train/infected/covid'
 	                  }
 
-	trainset = TrinaryClassDatasetPart('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
 	val_groups = ['val']
 	val_numbers = {'val_normal': 234,
@@ -132,7 +95,7 @@ if __name__ == "__main__":
 	                'val_covid': './dataset/test/infected/covid',
 	                }
 
-	valset = TrinaryClassDatasetPart('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
 	# load dataset
 	batch_size = 4
