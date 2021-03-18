@@ -80,7 +80,7 @@ def get_args(argv=None):
 
 # magic inside
 # adds a new set of label to each test sample
-def __get_binary_piped_test_dataset(img_size):
+def __get_binary_piped_test_dataset(img_size, batch_size):
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['test']
 	dataset_numbers = {'test_normal': 234,
@@ -124,13 +124,13 @@ def __get_binary_piped_test_dataset(img_size):
 			test2.append((testset2[i][0], testset2[i][1], torch.tensor([0., 0., 1.])))
 
 	testsetNormal = ConcatDataset([test1, test2])
-	testloaderNormal = DataLoader(testsetNormal, batch_size=args.batch_size, shuffle=True)
+	testloaderNormal = DataLoader(testsetNormal, batch_size=batch_size, shuffle=True)
 
 	return testloaderNormal
 
 
 # independent normal dataset
-def __get_binary_normal_test_dataset(img_size):
+def __get_binary_normal_test_dataset(img_size, batch_size):
 	groups = ['test']
 
 	class_dict = {0: 'normal', 1: 'infected'}
@@ -156,13 +156,13 @@ def __get_binary_normal_test_dataset(img_size):
 
 	# load dataset
 	testsets = ConcatDataset([testset1, testset2])
-	testloader = DataLoader(testsets, batch_size=4, shuffle=True)
+	testloader = DataLoader(testsets, batch_size=batch_size, shuffle=True)
 
 	return testloader
 
 
 # independent covid dataset
-def __get_binary_covid_test_dataset(img_size):
+def __get_binary_covid_test_dataset(img_size, batch_size):
 	class_dict = {0: 'non-covid', 1: 'covid'}
 	dataset_numbers = {'test_non-covid': 242,
 					   'test_covid': 138,
@@ -174,12 +174,12 @@ def __get_binary_covid_test_dataset(img_size):
 
 	testset = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 
-	testloader = DataLoader(testset, batch_size=4, shuffle=True)
+	testloader = DataLoader(testset, batch_size=batch_size, shuffle=True)
 	return testloader
 
 
 # trinary dataset
-def __get_trinary_test_dataset(img_size):
+def __get_trinary_test_dataset(img_size, batch_size):
 	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
 
 	test_groups = ['test']
@@ -195,7 +195,7 @@ def __get_trinary_test_dataset(img_size):
 
 	testset = TrinaryClassDataset('test', img_size, class_dict, test_groups, test_numbers, testset_paths)
 
-	testloader = DataLoader(testset, batch_size=1, shuffle=True)
+	testloader = DataLoader(testset, batch_size=batch_size, shuffle=True)
 
 	return testloader
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 			print("Starting: Normal piped binary classifier")
 
 			# get test loader
-			testloaderNormal = __get_binary_piped_test_dataset(img_size)
+			testloaderNormal = __get_binary_piped_test_dataset(img_size, arg.batch_size)
 
 			# define model
 			model = Net(2)
@@ -244,7 +244,7 @@ if __name__ == "__main__":
 		else:
 			print("Starting: Normal independent binary classifier")
 
-			normalIndependentTestloader = __get_binary_normal_test_dataset(img_size)
+			normalIndependentTestloader = __get_binary_normal_test_dataset(img_size, arg.batch_size)
 
 			model = Net(2)
 			model.load_state_dict(torch.load(normalCLFPath))
@@ -252,7 +252,7 @@ if __name__ == "__main__":
 
 			print("Starting: Covid independent binary classifier")
 
-			covidIndependentTestloader = __get_binary_covid_test_dataset(img_size)
+			covidIndependentTestloader = __get_binary_covid_test_dataset(img_size, arg.batch_size)
 
 			model.load_state_dict(torch.load(covidCLFPath))
 			test_original(model, covidIndependentTestloader)
