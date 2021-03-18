@@ -1,8 +1,8 @@
-import time
 import torch
 import numpy as np
 import torch.nn.functional as F
 
+from datetime import datetime
 from model import Net, DenseNet
 
 from torch import nn
@@ -110,7 +110,7 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train']
-	dataset_numbers = {'train_normal': 1341,
+	dataset_numbers = {'train_normal': 0, # so it does not double count
 	                   'train_infected': 2530,
 	                   }
 
@@ -211,15 +211,18 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 
 if __name__ == "__main__":
 
-	trainingEpochs = 2
+	now = datetime.now()
+	timestamp = now.strftime("%d/%m/%Y-%H:%M:%S")
+
+	trainingEpochs = 5
 	trainingBatchSize = 4
-	covidSavePath = 'models/binaryModelCovid'
-	normalSavePath = 'models/binaryModelNormal'
-	trinarySavePath = 'models/trinaryModel'
+	# covidSavePath = f'models/binaryModelCovid{timestamp}'
+	normalSavePath = f'models/binaryModelNormal{timestamp}'
+	# trinarySavePath = f'models/trinaryModel{timestamp}'
 
 	train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
 
-	train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
+	# train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
 
-	train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
+	# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
 
