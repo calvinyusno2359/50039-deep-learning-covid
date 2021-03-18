@@ -20,9 +20,10 @@ def transform(img_tensor):
 
 	return transform(img_tensor)
 
-def validate(model, validloader, device='cuda'):
+def validate(model, validloader, weight, device='cuda'):
 	model.to(device)
 	model.eval()
+
 	test_loss = 0
 	correct = 0
 	with torch.no_grad():
@@ -31,7 +32,7 @@ def validate(model, validloader, device='cuda'):
 			data, target = data.to(device), target.to(device)
 			data = transform(data)
 			output = model(data)
-			test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+			test_loss += F.nll_loss(output, target, weight=weight.to(device), reduction='sum').item()  # sum up batch loss
 			pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
 			correct += pred.eq(target.view_as(pred)).sum().item()
 			test_loss /= len(validloader.dataset)
@@ -42,10 +43,11 @@ def validate(model, validloader, device='cuda'):
 
 	return test_loss
 
-def train(model, trainloader, epoch, device='cuda'):
+def train(model, trainloader, weight, epoch, device='cuda'):
 	print(f'Train Epoch: {epoch}')
 	model.to(device)
 	model.train()
+
 	for batch_idx, (data, target) in enumerate(trainloader):
 		target = np.argmax(target, axis=1)
 		data, target = data.to(device), target.to(device)
@@ -53,7 +55,7 @@ def train(model, trainloader, epoch, device='cuda'):
 		optimizer = optim.Adadelta(model.parameters(), lr=0.001)
 		optimizer.zero_grad()
 		output = model(data)
-		loss = F.nll_loss(output, target)
+		loss = F.nll_loss(output, target, weight=weight.to(device))
 		loss.backward()
 		optimizer.step()
 		# TODO Change Batch size printing
@@ -64,6 +66,7 @@ def train(model, trainloader, epoch, device='cuda'):
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 	# covid vs non-covid clf
+	weight = torch.tensor([1., 1.8810])
 	img_size = (150, 150)
 	class_dict = {0: 'non-covid', 1: 'covid'}
 	train_groups = ['train']
@@ -97,8 +100,8 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 	lowest_loss = 9999
 	optimal_epoch = 0
 	for epoch in range(1, trainingEpochs + 1):
-		train(model, trainloader, epoch)
-		loss = validate(model, validationloader)
+		train(model, trainloader, weight, epoch)
+		loss = validate(model, validationloader, weight)
 		if loss <= lowest_loss:
 			lowest_loss = loss
 			optimal_epoch = epoch
@@ -106,7 +109,7 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 			torch.save(model.state_dict(), f'{savePath}_{optimal_epoch}')
 
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
-
+	weight = torch.tensor([1., 2.8896])
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train']
@@ -164,8 +167,8 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 	lowest_loss = 9999
 	optimal_epoch = 0
 	for epoch in range(1, trainingEpochs + 1):
-		train(model, trainloader, epoch)
-		loss = validate(model, validationloader)
+		train(model, trainloader, weight, epoch)
+		loss = validate(model, validationloader, weight)
 		if loss <= lowest_loss:
 			lowest_loss = loss
 			optimal_epoch = epoch
