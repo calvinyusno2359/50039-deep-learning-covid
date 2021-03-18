@@ -66,7 +66,7 @@ def train(model, trainloader, weight, epoch, device='cuda'):
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 	# covid vs non-covid clf
-	weight = torch.tensor([1., 1.8810])
+	weight = torch.tensor([1., 3.7722]) # best [1., 3.7722]
 	img_size = (150, 150)
 	class_dict = {0: 'non-covid', 1: 'covid'}
 	train_groups = ['train']
@@ -109,7 +109,7 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 			torch.save(model.state_dict(), f'{savePath}_{optimal_epoch}')
 
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
-	weight = torch.tensor([1., 2.8896])
+	weight = torch.tensor([1., 2.8896]) # best [1., 2.8896]
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train']
@@ -225,14 +225,14 @@ if __name__ == "__main__":
 	now = datetime.now()
 	timestamp = now.strftime("%d%m_%H%M")
 
-	normalTrainingEpochs = 16 # between 1 to 3 best
-	covidTrainingEpochs = 16 # between 8 to 12
+	normalTrainingEpochs = 12
+	covidTrainingEpochs = 20
 	trainingBatchSize = 8
 	covidSavePath = f'models/binaryModelCovid{timestamp}'
 	normalSavePath = f'models/binaryModelNormal{timestamp}'
 	# trinarySavePath = f'models/trinaryModel{timestamp}'
 
-	train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
+	# train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
 	train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath)
 
 	# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
