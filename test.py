@@ -40,7 +40,7 @@ if __name__ == "__main__":
 	img_size = (150, 150)
 
 	if args.output_var == 2:
-		normalCLFPath = 'models/binaryModelNormal'
+		normalCLFPath = 'models/binaryModelNormal_18_03_2021_13_36_37'
 
 		print("normal classifier")
 		class_dict = {0: 'normal', 1: 'infected'}
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
 
 		print("covid classifier")
-		covidCLFPath = 'models/binaryModelNormal'
+		covidCLFPath = 'models/binaryModelCovid'
 		class_dict = {0: 'non-covid', 1: 'covid'}
 		test_groups = ['test']
 		test_numbers = {'test_non-covid': 242,
@@ -101,9 +101,6 @@ if __name__ == "__main__":
 		model.load_state_dict(torch.load(covidCLFPath))
 
 		test(model, testloader)
-
-		# ?? how to use the output and why are there 4 labels??
-
 
 	elif args.output_var == 3:
 		trinaryCLFPath = 'models/trinaryModel'

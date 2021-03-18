@@ -7,10 +7,9 @@ from model import Net, DenseNet
 
 from torch import nn
 from torch import optim
-from torchvision import models
+from torchvision import models, transforms
 from dataset import TrinaryClassDataset, BinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset
-
 
 def validate(model, validloader, device='cuda'):
 	model.to(device)
@@ -22,38 +21,31 @@ def validate(model, validloader, device='cuda'):
 			target = np.argmax(target, axis=1)
 			data, target = data.to(device), target.to(device)
 			output = model(data)
-			test_loss += F.nll_loss(output, target, reduction='sum').item()
-
-			# predicted_labels = torch.exp(output).max(dim=1)[1]
-			# equality = (target.data.max(dim=1)[1] == predicted_labels)
-			# accuracy += equality.type(torch.FloatTensor).mean()
-			# print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-			# 	test_loss, correct, len(validloader.dataset),
-			# 	100. * correct / len(validloader.dataset)))
 			test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
 			pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
 			correct += pred.eq(target.view_as(pred)).sum().item()
-
 			test_loss /= len(validloader.dataset)
 
-	print('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+	print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
 		test_loss, correct, len(validloader.dataset),
 		100. * correct / len(validloader.dataset)))
 
+def transform(img_tensor):
+	transform = transforms.Compose([
+		transforms.RandomHorizontalFlip(),
+		transforms.RandomRotation(45),
+	])
 
-# return test_loss, accuracy
-
+	return transform(img_tensor)
 
 def train(model, trainloader, epoch, device='cuda'):
 	print(f'Train Epoch: {epoch}')
 	model.to(device)
 	model.train()
 	for batch_idx, (data, target) in enumerate(trainloader):
-		# print("TARGET", target)
 		target = np.argmax(target, axis=1)
-		# print("TARGET", target)
-		# print("DATA", data)
 		data, target = data.to(device), target.to(device)
+		data = transform(data)
 		optimizer = optim.Adadelta(model.parameters(), lr=0.001)
 		optimizer.zero_grad()
 		output = model(data)
@@ -65,7 +57,6 @@ def train(model, trainloader, epoch, device='cuda'):
 			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
 				epoch, batch_idx * len(data), len(trainloader.dataset),
 						100. * batch_idx / len(trainloader), loss.item()))
-
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 	# covid vs non-covid clf
@@ -104,12 +95,12 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 		validate(model, validationloader)
 		torch.save(model.state_dict(), savePath)
 
-# DUPLICATE NORMAL
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
-
+	# normal vs infected clf
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train']
+
 	dataset_numbers = {'train_normal': 0, # so it does not double count
 	                   'train_infected': 2530,
 	                   }
@@ -168,7 +159,6 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 
 
 def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
-
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
 	train_groups = ['train']
@@ -208,13 +198,11 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 		validate(model, validationloader)
 		torch.save(model.state_dict(), savePath)
 
-
 if __name__ == "__main__":
-
 	now = datetime.now()
-	timestamp = now.strftime("%d/%m/%Y-%H:%M:%S")
+	timestamp = now.strftime("_%d_%m_%Y_%H_%M_%S")
 
-	trainingEpochs = 5
+	trainingEpochs = 7
 	trainingBatchSize = 4
 	# covidSavePath = f'models/binaryModelCovid{timestamp}'
 	normalSavePath = f'models/binaryModelNormal{timestamp}'
