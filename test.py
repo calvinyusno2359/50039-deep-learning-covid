@@ -40,7 +40,7 @@ if __name__ == "__main__":
 	img_size = (150, 150)
 
 	if args.output_var == 2:
-		normalCLFPath = 'models/binaryModelNormal_18_03_2021_14_59_56'
+		normalCLFPath = 'models/binaryModelNormal_18_03_2021_15_29_50'
 
 		print("normal classifier")
 		class_dict = {0: 'normal', 1: 'infected'}

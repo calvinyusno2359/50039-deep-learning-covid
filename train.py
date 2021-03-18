@@ -119,26 +119,26 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 	                 'train_infected': './dataset/train/infected/covid',
 	                 }
 
-    trainset2 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	trainset2 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 
-    # load dataset
-    trainsets = ConcatDataset([trainset1, trainset2])
-    trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
+	# load dataset
+	trainsets = ConcatDataset([trainset1, trainset2])
+	trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
 
-    val_groups = ['val']
-    val_numbers = {'val_normal': 234,
-                   'val_infected': 139,
-                   }
+	val_groups = ['val']
+	val_numbers = {'val_normal': 0,
+	               'val_infected': 8,
+	               }
 
-    valset_paths = {'val_normal': './dataset/test/normal',
-                    'val_infected': './dataset/test/infected/covid',
-                    }
+	valset_paths = {'val_normal': './dataset/test/normal',
+	                'val_infected': './dataset/test/infected/covid',
+	                }
 
-    valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    val_numbers = {'val_normal': 0,
-                   'val_infected': 242,
-                   }
+	val_numbers = {'val_normal': 8,
+	               'val_infected': 8,
+	               }
 
 	valset_paths = {'val_normal': './dataset/val/normal',
 	                'val_infected': './dataset/val/infected/non-covid',
@@ -167,23 +167,23 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 					 'train_covid': 1345
 					 }
 
-    trainset_paths = {'train_normal': './dataset/train/normal',
-                      'train_infected': './dataset/train/infected/non-covid',
-                      'train_covid': './dataset/train/infected/covid'
-                      }
+	trainset_paths = {'train_normal': './dataset/train/normal',
+	                  'train_infected': './dataset/train/infected/non-covid',
+	                  'train_covid': './dataset/train/infected/covid'
+	                  }
 
-    trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
-    val_groups = ['val']
-    val_numbers = {'val_normal': 234,
-                   'val_infected': 242,
-                   'val_covid': 139,
-                   }
+	val_groups = ['val']
+	val_numbers = {'val_normal': 234,
+	               'val_infected': 242,
+	               'val_covid': 139,
+	               }
 
-    valset_paths = {'val_normal': './dataset/test/normal/',
-                    'val_infected': './dataset/test/infected/non-covid',
-                    'val_covid': './dataset/test/infected/covid',
-                    }
+	valset_paths = {'val_normal': './dataset/test/normal/',
+	                'val_infected': './dataset/test/infected/non-covid',
+	                'val_covid': './dataset/test/infected/covid',
+	                }
 
 	valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
@@ -202,14 +202,14 @@ if __name__ == "__main__":
 	now = datetime.now()
 	timestamp = now.strftime("_%d_%m_%Y_%H_%M_%S")
 
-	trainingEpochs = 7
+	trainingEpochs = 3
 	trainingBatchSize = 4
 	# covidSavePath = f'models/binaryModelCovid{timestamp}'
 	normalSavePath = f'models/binaryModelNormal{timestamp}'
 	# trinarySavePath = f'models/trinaryModel{timestamp}'
 
-    train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
+	train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
 
-# train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
+	# train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
 
-# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
+	# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
