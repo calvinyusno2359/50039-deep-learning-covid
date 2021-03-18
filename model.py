@@ -22,28 +22,30 @@ class Net(nn.Module):
             # layer 2
             ResBlock(64, 128, 2),
             ResBlock(128, 128),
-            # layer 3
-            ResBlock(128, 256, 2),
-            ResBlock(256, 256),
-            # layer 4
-            ResBlock(256, 512, 2),
-            ResBlock(512, 512),
+            # # layer 3
+            # ResBlock(128, 256, 2),
+            # ResBlock(256, 256),
+            # # layer 4
+            # ResBlock(256, 512, 2),
+            # ResBlock(512, 512),
             nn.AdaptiveAvgPool2d((1, 1)),
             # PrintLayer(),
             nn.Flatten(),
             # PrintLayer(),
         )
-        self.fc = nn.Linear(512, numberOfOutputLabels)
+        # self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(128, numberOfOutputLabels)
 
     def forward(self, x):
         x = self.layers(x)
-        x = self.fc(x)
+        # x = self.fc1(x)
+        x = self.fc2(x)
         output = F.log_softmax(x, dim=1)
         return output
 
 
 #
-# class ResBlock(nn.Module):
+# class SimpleResBlock(nn.Module):
 #     def __init__(self, module):
 #         super().__init__()
 #         self.module = nn.Sequential(
