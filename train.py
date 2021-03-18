@@ -66,7 +66,6 @@ def train(model, trainloader, epoch, device='cuda'):
                 epoch, batch_idx * len(data), len(trainloader.dataset),
                        100. * batch_idx / len(trainloader), loss.item()))
 
-
 def train_multi_clf():
     # set and load dataset spec
     img_size = (150, 150)
@@ -110,6 +109,44 @@ def train_multi_clf():
         validate(model, validationloader)
 
 
+def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
+	# covid vs non-covid clf
+	img_size = (150, 150)
+	class_dict = {0: 'non-covid', 1: 'covid'}
+	train_groups = ['train']
+	train_numbers = {'train_non-covid': 2530,
+					 'train_covid': 1345
+					 }
+
+	trainset_paths = {'train_non-covid': './dataset/train/infected/non-covid',
+	                  'train_covid': './dataset/train/infected/covid'
+	                  }
+
+	trainset = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+
+	val_groups = ['val']
+	val_numbers = {'val_non-covid': 8,
+	               'val_covid': 8,
+	               }
+
+	valset_paths = {'val_non-covid': './dataset/val/infected/non-covid',
+	                'val_covid': './dataset/val/infected/covid',
+	                }
+
+	valset = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+
+	# load dataset
+	trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
+	validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
+
+	model = Net(numberOfOutputLabels=2)
+
+	for epoch in range(1, trainingEpochs + 1):
+		train(model, trainloader, epoch)
+		validate(model, validationloader)
+		torch.save(model.state_dict(), savePath)
+
+
 def train_covid_clf():
     # covid vs non-covid clf
     img_size = (150, 150)
@@ -149,72 +186,123 @@ def train_covid_clf():
         validate(model, validationloader)
         torch.save(model.state_dict(), 'models/binaryModelCovid')
 
+# DUPLICATE NORMAL
+def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 
-def train_normal_clf():
-    batch_size = 4
-    epochs = 5
+	img_size = (150, 150)
+	class_dict = {0: 'normal', 1: 'infected'}
+	groups = ['train']
+	dataset_numbers = {'train_normal': 0,
+	                   'train_infected': 2530,
+	                   }
 
-    img_size = (150, 150)
-    class_dict = {0: 'normal', 1: 'infected'}
-    groups = ['train']
-    dataset_numbers = {'train_normal': 1341,
-                       'train_infected': 2530,
-                       }
+	dataset_paths = {'train_normal': './dataset/train/normal/',
+	                 'train_infected': './dataset/train/infected/non-covid',
+	                 }
 
-    dataset_paths = {'train_normal': './dataset/train/normal/',
-                     'train_infected': './dataset/train/infected/non-covid',
-                     }
+	trainset1 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 
-    trainset1 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	dataset_numbers = {'train_normal': 1341,
+	                   'train_infected': 1345,
+	                   }
 
-    dataset_numbers = {'train_normal': 1341,
-                       'train_infected': 1345,
-                       }
+	dataset_paths = {'train_normal': './dataset/train/normal/',
+	                 'train_infected': './dataset/train/infected/covid',
+	                 }
 
-    dataset_paths = {'train_normal': './dataset/train/normal/',
-                     'train_infected': './dataset/train/infected/covid',
-                     }
+	trainset2 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 
-    trainset2 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	# load dataset
+	trainsets = ConcatDataset([trainset1, trainset2])
+	trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
 
-    # load dataset
-    trainsets = ConcatDataset([trainset1, trainset2])
-    trainloader = DataLoader(trainsets, batch_size=batch_size, shuffle=True)
+	val_groups = ['val']
+	val_numbers = {'val_normal': 8,
+	               'val_infected': 8,
+	               }
 
-    val_groups = ['val']
-    val_numbers = {'val_normal': 8,
-                   'val_infected': 8,
-                   }
+	valset_paths = {'val_normal': './dataset/val/normal',
+	                'val_infected': './dataset/val/infected/covid',
+	                }
 
-    valset_paths = {'val_normal': './dataset/test/normal',
-                    'val_infected': './dataset/test/infected/covid',
-                    }
+	valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	val_numbers = {'val_normal': 8,
+	               'val_infected': 8,
+	               }
 
-    val_numbers = {'val_normal': 8,
-                   'val_infected': 8,
-                   }
+	valset_paths = {'val_normal': './dataset/val/normal',
+	                'val_infected': './dataset/val/infected/non-covid',
+	                }
 
-    valset_paths = {'val_normal': './dataset/test/normal',
-                    'val_infected': './dataset/test/infected/non-covid',
-                    }
+	valset2 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    valset2 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	# load dataset
+	valsets = ConcatDataset([valset1, valset2])
+	validationloader = DataLoader(valsets, batch_size=trainingBatchSize, shuffle=True)
 
-    # load dataset
-    valsets = ConcatDataset([valset1, valset2])
-    validationloader = DataLoader(valsets, batch_size=batch_size, shuffle=True)
+	model = Net(numberOfOutputLabels=2)
 
-    batch_size = 4
-    epochs = 5
-    model = Net(numberOfOutputLabels=2)
+	for epoch in range(1, trainingEpochs + 1):
+		train(model, trainloader, epoch)
+		validate(model, validationloader)
+		torch.save(model.state_dict(), savePath)
 
-    for epoch in range(1, epochs + 1):
-        train(model, trainloader, epoch)
-        validate(model, validationloader)
-        torch.save(model.state_dict(), 'models/binaryModelNormal')
+
+def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
+
+	img_size = (150, 150)
+	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
+	train_groups = ['train']
+	train_numbers = {'train_normal': 1341,
+					 'train_infected': 2530,
+					 'train_covid': 1345
+					 }
+
+	trainset_paths = {'train_normal': './dataset/train/normal',
+					  'train_infected': './dataset/train/infected/non-covid',
+					  'train_covid': './dataset/train/infected/covid'
+					  }
+
+	trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+
+	val_groups = ['val']
+	val_numbers = {'val_normal': 8,
+				   'val_infected': 8,
+				   'val_covid': 8,
+				   }
+
+	valset_paths = {'val_normal': './dataset/val/normal/',
+					'val_infected': './dataset/val/infected/non-covid',
+					'val_covid': './dataset/val/infected/covid',
+					}
+
+	valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+
+	# load dataset
+	trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
+	validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
+
+	model = Net(3)
+
+	for epoch in range(1, trainingEpochs + 1):
+		train(model, trainloader, epoch)
+		validate(model, validationloader)
+		torch.save(model.state_dict(), savePath)
+
 
 
 if __name__ == "__main__":
-    train_multi_clf()
+
+	trainingEpochs = 2
+	trainingBatchSize = 4
+	covidSavePath = 'models/binaryModelCovid'
+	normalSavePath = 'models/binaryModelNormal'
+	trinarySavePath = 'models/trinaryModel'
+
+	train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
+
+	train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
+
+	train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
+

@@ -42,7 +42,7 @@ class ImageDataset(Dataset):
 		path_to_file = f'{dataset_path}/{index_val}.jpg'
 
 		with open(path_to_file, 'rb') as f:
-		    im = np.asarray(Image.open(f)) / 255
+			im = np.asarray(Image.open(f)) / 255
 		f.close()
 		return im
 
@@ -66,10 +66,12 @@ class TrinaryClassDataset(ImageDataset):
 		if index < first_val:
 			class_val = self.classes[0]
 			label = torch.Tensor([1, 0, 0])
+
 		elif first_val <= index < (second_val + first_val):
 			class_val = self.classes[1]
 			index = index - first_val
 			label = torch.Tensor([0, 1, 0])
+
 		else:
 			class_val = self.classes[2]
 			index = index - (first_val + second_val)
@@ -91,9 +93,11 @@ class BinaryClassDataset(ImageDataset):
 	def __getitem__(self, index):
 		# Get item special method
 		first_val = int(list(self.dataset_numbers.values())[0])
+
 		if index < first_val:
 			class_val = self.classes[0]
 			label = torch.Tensor([1, 0])
+
 		else:
 			class_val = self.classes[1]
 			index = index - first_val
