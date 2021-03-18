@@ -110,7 +110,7 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 	img_size = (150, 150)
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['train']
-	dataset_numbers = {'train_normal': 1341,
+	dataset_numbers = {'train_normal': 0,
 	                   'train_infected': 2530,
 	                   }
 

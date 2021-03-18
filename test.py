@@ -102,9 +102,6 @@ if __name__ == "__main__":
 
 		test(model, testloader)
 
-		# ?? how to use the output and why are there 4 labels??
-
-
 	elif args.output_var == 3:
 		trinaryCLFPath = 'models/trinaryModel'
 
