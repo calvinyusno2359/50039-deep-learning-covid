@@ -73,75 +73,80 @@ def get_args(argv=None):
 def run_double_binary():
 	print('done')
 
+
+# magic inside
+def __get_binary_normal_test_dataset():
+	class_dict = {0: 'normal', 1: 'infected'}
+	groups = ['test']
+	dataset_numbers = {'test_normal': 234,
+					   'test_infected': 242,
+					   }
+
+	dataset_paths = {'test_normal': './dataset/test/normal/',
+					 'test_infected': './dataset/test/infected/non-covid',
+					 }
+
+	# normal, infected
+	# normal, non covid, covid
+	testset1 = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+
+	test1 = []
+	# appends an additional pair of labels
+	# first pair: [normal, infected]
+	# second pair: [normal, non-covid, covid] --> hardcoded tensor
+	for i in range(len(testset1)):
+		if torch.equal(testset1[i][1], torch.tensor([1., 0.])):
+			test1.append((testset1[i][0], testset1[i][1], torch.tensor([1., 0., 0.])))
+		elif torch.equal(testset1[i][1], torch.tensor([0., 1.])):
+			test1.append((testset1[i][0], testset1[i][1], torch.tensor([0., 1., 0.])))
+
+	dataset_numbers = {'test_normal': 0,
+					   'test_infected': 138,
+					   }
+
+	dataset_paths = {'test_normal': './dataset/test/normal/',
+					 'test_infected': './dataset/test/infected/covid',
+					 }
+
+	testset2 = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+
+	test2 = []
+	# appends an additional pair of labels
+	# first pair: [normal, infected]
+	# second pair: [normal, non-covid, covid] --> hardcoded tensor
+	for i in range(len(testset2)):
+		if torch.equal(testset2[i][1], torch.tensor([0., 1.])):
+			test2.append((testset2[i][0], testset2[i][1], torch.tensor([0., 0., 1.])))
+
+	testsetNormal = ConcatDataset([test1, test2])
+	testloaderNormal = DataLoader(testsetNormal, batch_size=args.batch_size, shuffle=True)
+
+	return testloaderNormal
+
 if __name__ == "__main__":
 	args = get_args()
 
 	# set and load dataset spec
 	img_size = (150, 150)
 
+	# model parameters
+	normalCLFPath = 'models/binaryModelNormal_18_03_2021_15_29_50'
+	covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_45_25'
+
+	# doing binary classifier
 	if args.output_var == 2:
-		img_size = (150, 150)
 
-		print("normal binary classifier")
+		print("Starting: Normal binary classifier")
 
-		normalCLFPath = 'models/binaryModelCovid_18_03_2021_17_04_59'
-
-		class_dict = {0: 'normal', 1: 'infected'}
-		groups = ['test']
-		dataset_numbers = {'test_normal': 234,
-						   'test_infected': 242,
-						   }
-
-		dataset_paths = {'test_normal': './dataset/test/normal/',
-						 'test_infected': './dataset/test/infected/non-covid',
-						 }
-
-		# normal, infected
-		# normal, non covid, covid
-		testset1 = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
-
-		test1 = []
-
-		# appends an additional pair of labels
-		# first pair: [normal, infected]
-		# second pair: [normal, non-covid, covid] --> hardcoded tensor
-		for i in range(len(testset1)):
-			if torch.equal(testset1[i][1], torch.tensor([1., 0.])):
-				test1.append((testset1[i][0], testset1[i][1], torch.tensor([1., 0., 0.])))
-			elif torch.equal(testset1[i][1], torch.tensor([0., 1.])):
-				test1.append((testset1[i][0], testset1[i][1], torch.tensor([0., 1., 0.])))
-
-		dataset_numbers = {'test_normal': 0,
-						   'test_infected': 138,
-						   }
-
-		dataset_paths = {'test_normal': './dataset/test/normal/',
-						 'test_infected': './dataset/test/infected/covid',
-						 }
-
-		testset2 = BinaryClassDataset('test', img_size, class_dict, groups, dataset_numbers, dataset_paths)
-
-		test2 = []
-
-		# appends an additional pair of labels
-		# first pair: [normal, infected]
-		# second pair: [normal, non-covid, covid] --> hardcoded tensor
-		for i in range(len(testset2)):
-			if torch.equal(testset2[i][1], torch.tensor([0., 1.])):
-				test2.append((testset2[i][0], testset2[i][1], torch.tensor([0., 0., 1.])))
-
-		testsetNormal = ConcatDataset([test1, test2])
-		testloaderNormal = DataLoader(testsetNormal, batch_size=args.batch_size, shuffle=True)
+		testloaderNormal = __get_binary_normal_test_dataset()
 
 		model = Net(2)
+
 		model.load_state_dict(torch.load(normalCLFPath))
 
 		intermediate = test(model, testloaderNormal, True, torch.tensor([1.]), True)
 
 		print("covid binary classifier (piped)")
-
-
-		covidCLFPath = 'models/binaryModelNormal_18_03_2021_17_04_59'
 
 		model = Net(numberOfOutputLabels=2)
 		model.load_state_dict(torch.load(covidCLFPath))
