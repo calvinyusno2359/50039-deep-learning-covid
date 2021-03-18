@@ -139,8 +139,8 @@ if __name__ == "__main__":
 	img_size = (150, 150)
 
 	# model parameters
-	normalCLFPath = 'models/binaryModelNormal_18_03_2021_15_29_50'
-	covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_45_25'
+	normalCLFPath = 'models/binaryModelNormal_18_03_2021_16_57_46'
+	covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_41_29'
 
 	# if you want independent or piped binary classifier
 	independent = False
