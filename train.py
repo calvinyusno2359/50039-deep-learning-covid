@@ -46,7 +46,7 @@ def train(model, trainloader, epoch, device='cuda'):
 		target = np.argmax(target, axis=1)
 		data, target = data.to(device), target.to(device)
 		data = transform(data)
-		optimizer = optim.Adadelta(model.parameters(), lr=0.001)
+		optimizer = optim.Adadelta(model.parameters(), lr=0.01)
 		optimizer.zero_grad()
 		output = model(data)
 		loss = F.nll_loss(output, target)
