@@ -34,18 +34,18 @@ def get_args(argv=None):
 
 
 if __name__ == "__main__":
-	# args = get_args()
+	args = get_args()
 
 	# set and load dataset spec
 	img_size = (150, 150)
 
 	if args.output_var == 2:
-		normalCLFPath = 'models/binaryModelNormal'
+		normalCLFPath = 'models/binaryModelNormal_18_03_2021_13_36_37'
 
 		print("normal classifier")
 		class_dict = {0: 'normal', 1: 'infected'}
 		groups = ['test']
-		dataset_numbers = {'test_normal': 234,
+		dataset_numbers = {'test_normal': 0,
 						   'test_infected': 242,
 						   }
 
