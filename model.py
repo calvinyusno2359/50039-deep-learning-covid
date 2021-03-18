@@ -17,19 +17,23 @@ class Net(nn.Module):
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             # PrintLayer(),
             # layer1
-            ResBlock(64, 128),
-            ResBlock(128, 128),
+            ResBlock(64, 64,),
+            ResBlock(64, 64),
             # layer 2
+            ResBlock(64, 128, 2),
+            ResBlock(128, 128),
+            # layer 3
             ResBlock(128, 256, 2),
-            ResBlock(256, 256, 1),
-            # 75%
-
+            ResBlock(256, 256),
+            # layer 4
+            ResBlock(256, 512, 2),
+            ResBlock(512, 512),
             nn.AdaptiveAvgPool2d((1, 1)),
             # PrintLayer(),
             nn.Flatten(),
             # PrintLayer(),
         )
-        self.fc = nn.Linear(256, numberOfOutputLabels)
+        self.fc = nn.Linear(512, numberOfOutputLabels)
 
     def forward(self, x):
         x = self.layers(x)
