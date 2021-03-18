@@ -49,6 +49,8 @@ def test_second_binary(model, testloader, device='cuda'):
 	with torch.no_grad():
 		for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
 			target_labels[0] = torch.narrow(target_labels[0], 0, 1, 1)  # slicing the second bunch of labels
+			print("here:", target_labels[0])
+			print("there:", target_labels)
 			images_data, target_labels = images_data.to(device), target_labels.to(device)
 			images_data = transform(images_data)
 			output = model(images_data)
