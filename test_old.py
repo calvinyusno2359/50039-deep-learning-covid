@@ -2,6 +2,7 @@ import torch
 import argparse
 
 from model import Net
+from train import transform
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 
@@ -18,6 +19,7 @@ def test(model, testloader, device='cuda'):
 	# Try model on one mini-batch
 	for batch_idx, (images_data, target_labels) in enumerate(testloader):
 		images_data, target_labels = images_data.to(device), target_labels.to(device)
+		images_data = transform(images_data)
 		output = model(images_data)
 		predicted_labels = torch.exp(output).max(dim=1)[1]
 		equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
@@ -91,8 +93,8 @@ if __name__ == "__main__":
 	args = get_args()
 
 	# model parameters
-	covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_45_25'
-	normalCLFPath = 'models/binaryModelNormal_18_03_2021_15_29_50'
+	covidCLFPath = 'models/binaryModelCovidBest'
+	normalCLFPath = 'models/binaryModelNormalBest'
 
 	# doing binary classifier
 	if args.output_var == 2:

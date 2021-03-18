@@ -40,6 +40,8 @@ def validate(model, validloader, device='cuda'):
 		test_loss, correct, len(validloader.dataset),
 		100. * correct / len(validloader.dataset)))
 
+	return test_loss
+
 def train(model, trainloader, epoch, device='cuda'):
 	print(f'Train Epoch: {epoch}')
 	model.to(device)
@@ -92,11 +94,16 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 
 	model = Net(numberOfOutputLabels=2)
 
+	lowest_loss = 9999
+	optimal_epoch = 0
 	for epoch in range(1, trainingEpochs + 1):
 		train(model, trainloader, epoch)
-		validate(model, validationloader)
-		torch.save(model.state_dict(), savePath)
-
+		loss = validate(model, validationloader)
+		if loss <= lowest_loss:
+			lowest_loss = loss
+			optimal_epoch = epoch
+			print(f'Found New Minima at epoch {optimal_epoch} loss: {lowest_loss}\n')
+			torch.save(model.state_dict(), f'{savePath}_{optimal_epoch}')
 
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 
@@ -154,11 +161,16 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 
 	model = Net(numberOfOutputLabels=2)
 
+	lowest_loss = 9999
+	optimal_epoch = 0
 	for epoch in range(1, trainingEpochs + 1):
 		train(model, trainloader, epoch)
-		validate(model, validationloader)
-		torch.save(model.state_dict(), savePath)
-
+		loss = validate(model, validationloader)
+		if loss <= lowest_loss:
+			lowest_loss = loss
+			optimal_epoch = epoch
+			print(f'Found New Minima at epoch {optimal_epoch} loss: {lowest_loss}\n')
+			torch.save(model.state_dict(), f'{savePath}_{optimal_epoch}')
 
 def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 	img_size = (150, 150)
@@ -195,19 +207,24 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 
 	model = Net(3)
 
+	lowest_loss = 9999
+	optimal_epoch = 0
 	for epoch in range(1, trainingEpochs + 1):
 		train(model, trainloader, epoch)
-		validate(model, validationloader)
-		torch.save(model.state_dict(), savePath)
-
+		loss = validate(model, validationloader)
+		if loss <= lowest_loss:
+			lowest_loss = loss
+			optimal_epoch = epoch
+			print(f'Found New Minima at epoch {optimal_epoch} loss: {lowest_loss}')
+			torch.save(model.state_dict(), f'{savePath}_{optimal_epoch}\n')
 
 if __name__ == "__main__":
 	now = datetime.now()
-	timestamp = now.strftime("_%d_%m_%Y_%H_%M_%S")
+	timestamp = now.strftime("%d%m_%H%M")
 
-	normalTrainingEpochs = 4
-	covidTrainingEpochs = 4
-	trainingBatchSize = 4
+	normalTrainingEpochs = 16 # between 1 to 3 best
+	covidTrainingEpochs = 16 # between 8 to 12
+	trainingBatchSize = 8
 	covidSavePath = f'models/binaryModelCovid{timestamp}'
 	normalSavePath = f'models/binaryModelNormal{timestamp}'
 	# trinarySavePath = f'models/trinaryModel{timestamp}'

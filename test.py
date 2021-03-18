@@ -1,5 +1,6 @@
 import torch
 import argparse
+import copy
 
 from model import Net
 from dataset import BinaryClassDataset, TrinaryClassDataset
@@ -28,6 +29,9 @@ def test_first_binary(model, testloader, desiredLabel, device='cuda'):
 			# if classified to be the one we are interested in
 			if torch.equal(predicted_labels, desiredLabel):
 				intermediate.append([images_data, target_labels, irrelevant])
+
+		print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
+
 
 	return intermediate
 
@@ -164,6 +168,7 @@ def __get_binary_normal_test_dataset(img_size, batch_size):
 # independent covid dataset
 def __get_binary_covid_test_dataset(img_size, batch_size):
 	class_dict = {0: 'non-covid', 1: 'covid'}
+	groups = ['test']
 	dataset_numbers = {'test_non-covid': 242,
 					   'test_covid': 138,
 					   }
@@ -222,7 +227,7 @@ if __name__ == "__main__":
 			print("Starting: Normal piped binary classifier")
 
 			# get test loader
-			testloaderNormal = __get_binary_piped_test_dataset(img_size, arg.batch_size)
+			testloaderNormal = __get_binary_piped_test_dataset(img_size, 1)
 
 			# define model
 			model = Net(2)
@@ -231,7 +236,8 @@ if __name__ == "__main__":
 			model.load_state_dict(torch.load(normalCLFPath))
 
 			# test and get the intermediate dataset for second classifier
-			intermediateTestLoader = test_first_binary(model, testloaderNormal, torch.tensor[1.])
+			intermediateTestLoader = test_first_binary(model, testloaderNormal, torch.tensor([1.]))
+			print(len(intermediateTestLoader))
 
 			print("Starting: Covid piped binary classifier")
 
@@ -244,7 +250,7 @@ if __name__ == "__main__":
 		else:
 			print("Starting: Normal independent binary classifier")
 
-			normalIndependentTestloader = __get_binary_normal_test_dataset(img_size, arg.batch_size)
+			normalIndependentTestloader = __get_binary_normal_test_dataset(img_size, 1)
 
 			model = Net(2)
 			model.load_state_dict(torch.load(normalCLFPath))
@@ -252,7 +258,7 @@ if __name__ == "__main__":
 
 			print("Starting: Covid independent binary classifier")
 
-			covidIndependentTestloader = __get_binary_covid_test_dataset(img_size, arg.batch_size)
+			covidIndependentTestloader = __get_binary_covid_test_dataset(img_size, 1)
 
 			model.load_state_dict(torch.load(covidCLFPath))
 			test_original(model, covidIndependentTestloader)
