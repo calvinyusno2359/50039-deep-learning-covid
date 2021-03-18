@@ -210,8 +210,7 @@ def __get_trinary_test_dataset(img_size, batch_size):
 
 
 if __name__ == "__main__":
-	#args = get_args()
-	output_var = 2
+	args = get_args()
 
 	# set and load dataset spec
 	img_size = (150, 150)
@@ -225,7 +224,7 @@ if __name__ == "__main__":
 	independent = False
 
 	# doing binary classifier
-	if output_var == 2:
+	if args.output_var == 2:
 
 		if not independent:
 
@@ -268,7 +267,7 @@ if __name__ == "__main__":
 			model.load_state_dict(torch.load(covidCLFPath))
 			test_original(model, covidIndependentTestloader)
 
-	elif output_var == 3:
+	elif args.output_var == 3:
 
 		print("Starting: Trinary classifier")
 
