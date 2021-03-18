@@ -104,7 +104,7 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 		validate(model, validationloader)
 		torch.save(model.state_dict(), savePath)
 
-
+# DUPLICATE NORMAL
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 
 	img_size = (150, 150)
@@ -149,8 +149,8 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 	               'val_infected': 8,
 	               }
 
-	valset_paths = {'val_normal': './dataset/test/normal',
-	                'val_infected': './dataset/test/infected/non-covid',
+	valset_paths = {'val_normal': './dataset/val/normal',
+	                'val_infected': './dataset/val/infected/non-covid',
 	                }
 
 	valset2 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
@@ -203,7 +203,7 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 
 	model = Net(3)
 
-	for epoch in range(1, epochs + 1):
+	for epoch in range(1, trainingEpochs + 1):
 		train(model, trainloader, epoch)
 		validate(model, validationloader)
 		torch.save(model.state_dict(), savePath)
@@ -211,15 +211,15 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
 
 if __name__ == "__main__":
 
-	trainingEpochs = 5
+	trainingEpochs = 2
 	trainingBatchSize = 4
 	covidSavePath = 'models/binaryModelCovid'
 	normalSavePath = 'models/binaryModelNormal'
 	trinarySavePath = 'models/trinaryModel'
 
-	train_binary_normal_clf(trainingEpochs, trainingBatchSize, covidSavePath)
+	train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
 
-	train_binary_covid_clf(trainingEpochs, trainingBatchSize, normalSavePath)
+	train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
 
 	train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
 
