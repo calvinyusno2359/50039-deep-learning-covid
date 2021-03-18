@@ -11,6 +11,14 @@ from torchvision import models, transforms
 from dataset import TrinaryClassDataset, BinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset
 
+def transform(img_tensor):
+	transform = transforms.Compose([
+		transforms.RandomHorizontalFlip(),
+		transforms.RandomRotation(45),
+		transforms.Normalize(mean=[0.4824], std=[0.2363])
+	])
+
+	return transform(img_tensor)
 
 def validate(model, validloader, device='cuda'):
 	model.to(device)
@@ -21,6 +29,7 @@ def validate(model, validloader, device='cuda'):
 		for batch_idx, (data, target) in enumerate(validloader):
 			target = np.argmax(target, axis=1)
 			data, target = data.to(device), target.to(device)
+			data = transform(data)
 			output = model(data)
 			test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
 			pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
@@ -30,17 +39,6 @@ def validate(model, validloader, device='cuda'):
 	print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
 		test_loss, correct, len(validloader.dataset),
 		100. * correct / len(validloader.dataset)))
-
-
-def transform(img_tensor):
-	transform = transforms.Compose([
-		transforms.RandomHorizontalFlip(),
-		transforms.RandomRotation(45),
-		transforms.Normalize(mean=[0.4824], std=[0.2363])
-	])
-
-	return transform(img_tensor)
-
 
 def train(model, trainloader, epoch, device='cuda'):
 	print(f'Train Epoch: {epoch}')
@@ -61,7 +59,6 @@ def train(model, trainloader, epoch, device='cuda'):
 			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
 				epoch, batch_idx * len(data), len(trainloader.dataset),
 						100. * batch_idx / len(trainloader), loss.item()))
-
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 	# covid vs non-covid clf
@@ -208,14 +205,14 @@ if __name__ == "__main__":
 	now = datetime.now()
 	timestamp = now.strftime("_%d_%m_%Y_%H_%M_%S")
 
-	trainingEpochs = 2
+	normalTrainingEpochs = 4
+	covidTrainingEpochs = 4
 	trainingBatchSize = 4
 	covidSavePath = f'models/binaryModelCovid{timestamp}'
-	# normalSavePath = f'models/binaryModelNormal{timestamp}'
+	normalSavePath = f'models/binaryModelNormal{timestamp}'
 	# trinarySavePath = f'models/trinaryModel{timestamp}'
 
-	# train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
-
-	train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
+	train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
+	train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath)
 
 	# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)

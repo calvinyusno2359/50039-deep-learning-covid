@@ -25,7 +25,7 @@ def test(model, testloader, returnIntermediate, intermediateLabel, isitBinary, d
 				images_data, target_labels = images_data.to(device), target_labels.to(device)
 				output = model(images_data)
 				predicted_labels = torch.exp(output).max(dim=1)[1]
-				print(predicted_labels, intermediateLabel)
+				# print(predicted_labels, intermediateLabel)
 				equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
 				accuracy += equality.type(torch.FloatTensor).mean()
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 		print("normal binary classifier")
 
-		normalCLFPath = 'models/binaryModelNormal_18_03_2021_15_29_50'
+		normalCLFPath = 'models/binaryModelCovid_18_03_2021_17_04_59'
 
 		class_dict = {0: 'normal', 1: 'infected'}
 		groups = ['test']
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 		print("covid binary classifier (piped)")
 
 
-		covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_45_25'
+		covidCLFPath = 'models/binaryModelNormal_18_03_2021_17_04_59'
 
 		model = Net(numberOfOutputLabels=2)
 		model.load_state_dict(torch.load(covidCLFPath))
