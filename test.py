@@ -6,60 +6,67 @@ from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 
 
-# full of magic
-# (bool) returnImmediate: asks if you need the image with predicted label matching intermediateLabel is to be returned
-# (int) intermediateLabel: the particular label you are interested in retrieving the image for further processing
-# (bool) isitBinary: binary has 2 pairs of labels, trinary only has 1
-def test(model, testloader, returnIntermediate, intermediateLabel, isitBinary, device='cuda'):
+# model: the model to be tested
+# testloader: containing the test data
+# desiredLabel: tensor of the label you want to pass to the second classifier
+def test_first_binary(model, testloader, desiredLabel, device='cuda'):
 	model.to(device)
 	model.eval()
 	accuracy = 0
 
 	intermediate = []
+	desiredLabel = desiredLabel.to(device)
 
-	intermediateLabel = intermediateLabel.to(device)
-	# first binary classifier
-	if returnIntermediate and isitBinary:
-		with torch.no_grad():
-			for batch_idx, (images_data, target_labels, irrelevant) in enumerate(testloader):
-				images_data, target_labels = images_data.to(device), target_labels.to(device)
-				output = model(images_data)
-				predicted_labels = torch.exp(output).max(dim=1)[1]
-				# print(predicted_labels, intermediateLabel)
-				equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
-				accuracy += equality.type(torch.FloatTensor).mean()
+	with torch.no_grad():
+		for batch_idx, (images_data, target_labels, irrelevant) in enumerate(testloader):
+			images_data, target_labels = images_data.to(device), target_labels.to(device)
+			output = model(images_data)
+			predicted_labels = torch.exp(output).max(dim=1)[1]
+			equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
+			accuracy += equality.type(torch.FloatTensor).mean()
 
-				if returnIntermediate and torch.equal(predicted_labels, intermediateLabel):
-					intermediate.append([images_data, target_labels, irrelevant])
-
-			print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
-
-	# second binary classifier
-	elif not returnIntermediate and isitBinary:
-		with torch.no_grad():
-			for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
-				target_labels[0] = torch.narrow(target_labels[0], 0, 1, 1) # slicing the second bunch of labels
-				images_data, target_labels = images_data.to(device), target_labels.to(device)
-				output = model(images_data)
-				predicted_labels = torch.exp(output).max(dim=1)[1]
-				equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
-				accuracy += equality.type(torch.FloatTensor).mean()
-
-			print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
-
-	# trinary classifier
-	else:
-		with torch.no_grad():
-			for batch_idx, (images_data, target_labels) in enumerate(testloader):
-				images_data, target_labels = images_data.to(device), target_labels.to(device)
-				output = model(images_data)
-				predicted_labels = torch.exp(output).max(dim=1)[1]
-				equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
-				accuracy += equality.type(torch.FloatTensor).mean()
-
-			print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
+			# if classified to be the one we are interested in
+			if torch.equal(predicted_labels, desiredLabel):
+				intermediate.append([images_data, target_labels, irrelevant])
 
 	return intermediate
+
+
+# model: the model to be tested
+# testloader: containing the test data
+# target_label issue
+def test_second_binary(model, testloader, device='cuda'):
+	model.to(device)
+	model.eval()
+	accuracy = 0
+
+	with torch.no_grad():
+		for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
+			target_labels[0] = torch.narrow(target_labels[0], 0, 1, 1)  # slicing the second bunch of labels
+			images_data, target_labels = images_data.to(device), target_labels.to(device)
+			output = model(images_data)
+			predicted_labels = torch.exp(output).max(dim=1)[1]
+			equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
+			accuracy += equality.type(torch.FloatTensor).mean()
+
+		print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
+
+
+# original test function
+def test_original(model, testloader, device='cuda'):
+	model.to(device)
+	model.eval()
+	accuracy = 0
+
+	with torch.no_grad():
+		for batch_idx, (images_data, target_labels) in enumerate(testloader):
+			images_data, target_labels = images_data.to(device), target_labels.to(device)
+			output = model(images_data)
+			predicted_labels = torch.exp(output).max(dim=1)[1]
+			equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
+			accuracy += equality.type(torch.FloatTensor).mean()
+
+		print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
 
 
 def get_args(argv=None):
@@ -70,12 +77,10 @@ def get_args(argv=None):
 	parser.add_argument("--load_from", type=str, help="specify path")
 	return parser.parse_args(argv)
 
-def run_double_binary():
-	print('done')
-
 
 # magic inside
-def __get_binary_normal_test_dataset():
+# adds a new set of label to each test sample
+def __get_binary_piped_test_dataset():
 	class_dict = {0: 'normal', 1: 'infected'}
 	groups = ['test']
 	dataset_numbers = {'test_normal': 234,
@@ -123,6 +128,10 @@ def __get_binary_normal_test_dataset():
 
 	return testloaderNormal
 
+def __get_binary_normal_test_dataset():
+
+
+
 if __name__ == "__main__":
 	args = get_args()
 
@@ -133,25 +142,43 @@ if __name__ == "__main__":
 	normalCLFPath = 'models/binaryModelNormal_18_03_2021_15_29_50'
 	covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_45_25'
 
+	# if you want independent or piped binary classifier
+	independent = False
+
 	# doing binary classifier
 	if args.output_var == 2:
 
-		print("Starting: Normal binary classifier")
+		if not independent:
 
-		testloaderNormal = __get_binary_normal_test_dataset()
+			print("Starting: Normal piped binary classifier")
 
-		model = Net(2)
+			# get test loader
+			testloaderNormal = __get_binary_piped_test_dataset()
 
-		model.load_state_dict(torch.load(normalCLFPath))
+			# define model
+			model = Net(2)
 
-		intermediate = test(model, testloaderNormal, True, torch.tensor([1.]), True)
+			# fetch model saved state
+			model.load_state_dict(torch.load(normalCLFPath))
 
-		print("covid binary classifier (piped)")
+			# test and get the intermediate dataset for second classifier
+			intermediateTestLoader = test_first_binary(model, testloaderNormal, torch.tensor[1.])
 
-		model = Net(numberOfOutputLabels=2)
-		model.load_state_dict(torch.load(covidCLFPath))
+			print("Starting: Covid piped binary classifier")
 
-		test(model, intermediate, False, torch.tensor([1.]), True)
+			# fetch model saved state
+			model.load_state_dict(torch.load(covidCLFPath))
+
+			# test and print
+			test_second_binary(model, intermediateTestLoader)
+
+
+		else:
+			print("Starting: Normal independent binary classifier")
+
+			print("Starting: Covid independent binary classifier")
+
+
 
 	elif args.output_var == 3:
 		print("trinary classifier")
