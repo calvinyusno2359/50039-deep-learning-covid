@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
 
 		print("covid classifier")
-		covidCLFPath = 'models/binaryModelNormal'
+		covidCLFPath = 'models/binaryModelCovid'
 		class_dict = {0: 'non-covid', 1: 'covid'}
 		test_groups = ['test']
 		test_numbers = {'test_non-covid': 242,
