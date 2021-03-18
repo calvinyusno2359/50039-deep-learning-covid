@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
 		# load dataset
 		testsets = ConcatDataset([testset1, testset2])
-		#testloader = DataLoader(testsets, batch_size=args.batch_size, shuffle=True)
+		# testloader = DataLoader(testsets, batch_size=args.batch_size, shuffle=True)
 		testloader = DataLoader(testsets, batch_size=4, shuffle=True)
 
 		# load model
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
 
 		print("covid classifier")
-		covidCLFPath = 'models/binaryModelCovid'
+		covidCLFPath = 'models/binaryModelCovid_18_03_2021_15_45_25'
 		class_dict = {0: 'non-covid', 1: 'covid'}
 		test_groups = ['test']
 		test_numbers = {'test_non-covid': 242,

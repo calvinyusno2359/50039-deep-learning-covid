@@ -202,14 +202,14 @@ if __name__ == "__main__":
 	now = datetime.now()
 	timestamp = now.strftime("_%d_%m_%Y_%H_%M_%S")
 
-	trainingEpochs = 3
+	trainingEpochs = 2
 	trainingBatchSize = 4
-	# covidSavePath = f'models/binaryModelCovid{timestamp}'
-	normalSavePath = f'models/binaryModelNormal{timestamp}'
+	covidSavePath = f'models/binaryModelCovid{timestamp}'
+	# normalSavePath = f'models/binaryModelNormal{timestamp}'
 	# trinarySavePath = f'models/trinaryModel{timestamp}'
 
-	train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
+	# train_binary_normal_clf(trainingEpochs, trainingBatchSize, normalSavePath)
 
-	# train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
+	train_binary_covid_clf(trainingEpochs, trainingBatchSize, covidSavePath)
 
 	# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
