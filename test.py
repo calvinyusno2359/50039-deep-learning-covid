@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 # model: the model to be tested
 # testloader: containing the test data
 # desiredLabel: tensor of the label you want to pass to the second classifier
-def test_first_binary(model, testloader, desiredLabel, device='cuda'):
+def test_first_binary(model, testloader, desiredLabel, device='cpu'):
 	model.to(device)
 	model.eval()
 	accuracy = 0
@@ -41,21 +41,20 @@ def test_first_binary(model, testloader, desiredLabel, device='cuda'):
 # model: the model to be tested
 # testloader: containing the test data
 # target_label issue
-def test_second_binary(model, testloader, device='cuda'):
+def test_second_binary(model, testloader, device='cpu'):
 	model.to(device)
 	model.eval()
 	accuracy = 0
 
 	with torch.no_grad():
 		for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
-			target_labels[0] = torch.narrow(target_labels[0], 0, 1, 1)  # slicing the second bunch of labels
-			print("here:", target_labels[0])
-			print("there:", target_labels)
+			# target_labels[0] = torch.narrow(target_labels[0], 0, 1, 1)  # slicing the second bunch of labels
+			target_labels = torch.narrow(target_labels[0], 0, 1, 2)  # slicing the second bunch of labels
 			images_data, target_labels = images_data.to(device), target_labels.to(device)
 			images_data = transform(images_data)
 			output = model(images_data)
 			predicted_labels = torch.exp(output).max(dim=1)[1]
-			equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
+			equality = (target_labels.data.max(dim=0)[1] == predicted_labels)
 			accuracy += equality.type(torch.FloatTensor).mean()
 
 		print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
@@ -242,7 +241,7 @@ if __name__ == "__main__":
 			model.load_state_dict(torch.load(normalCLFPath))
 
 			# test and get the intermediate dataset for second classifier
-			intermediateTestLoader = test_first_binary(model, testloaderNormal, torch.tensor([1.]))
+			intermediateTestLoader = test_first_binary(model, testloaderNormal, torch.tensor([1.]).type(torch.int64))
 			print(len(intermediateTestLoader))
 
 			print("Starting: Covid piped binary classifier")
