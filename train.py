@@ -13,9 +13,9 @@ from torch.utils.data import DataLoader, ConcatDataset
 
 def transform(img_tensor):
 	transform = transforms.Compose([
+	  transforms.Normalize(mean=[0.4824], std=[0.2363]),
 		transforms.RandomHorizontalFlip(),
 		transforms.RandomRotation(45),
-		transforms.Normalize(mean=[0.4824], std=[0.2363])
 	])
 
 	return transform(img_tensor)
