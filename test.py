@@ -2,7 +2,7 @@ import torch
 import argparse
 import copy
 
-from model import Net
+from model import ResNet, Xception, MobileNetV2
 from train import transform
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
@@ -245,8 +245,8 @@ if __name__ == "__main__":
 	img_size = (150, 150)
 
 	# model parameters
-	covidCLFPath = 'models/binaryModelCovidBestSensitivity'
-	normalCLFPath = 'models/binaryModelNormalBestSensitivity'
+	covidCLFPath = 'models/binaryModelCovid1903_1606_16'
+	normalCLFPath = 'models/binaryModelNormal1903_1735_4'
 	trinaryCLFPath = 'models/trinaryModel'
 
 	# if you want independent or piped binary classifier
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 			testloaderNormal = __get_binary_piped_test_dataset(img_size, 1)
 
 			# define model
-			model = Net(2)
+			model = MobileNetV2(2)
 
 			# fetch model saved state
 			model.load_state_dict(torch.load(normalCLFPath))
@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
 			normalIndependentTestloader = __get_binary_normal_test_dataset(img_size, 1)
 
-			model = Net(2)
+			model = MobileNetV2(2)
 			model.load_state_dict(torch.load(normalCLFPath))
 			test_original(model, normalIndependentTestloader)
 
@@ -302,7 +302,7 @@ if __name__ == "__main__":
 
 		trinaryTestloader = __get_trinary_test_dataset(img_size)
 
-		model = Net(3)
+		model = MobileNetV2(3)
 		model.load_state_dict(torch.load(trinaryCLFPath))
 		test_original(model, trinaryTestloader)
 
