@@ -3,10 +3,16 @@ import argparse
 import copy
 
 from model import Net
-from train import transform
+from torchvision import transforms
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 
+def transform(img_tensor):
+	transform = transforms.Compose([
+		transforms.Normalize(mean=[0.4824], std=[0.2363])
+	])
+
+	return transform(img_tensor)
 
 # model: the model to be tested
 # testloader: containing the test data
@@ -245,8 +251,8 @@ if __name__ == "__main__":
 	img_size = (150, 150)
 
 	# model parameters
-	covidCLFPath = 'models/binaryModelCovidBestSensitivity'
-	normalCLFPath = 'models/binaryModelNormalBestSensitivity'
+	covidCLFPath = 'models/binaryModelCovid1903_1503_8'
+	normalCLFPath = 'models/binaryModelNormal1903_1503_11'
 	trinaryCLFPath = 'models/trinaryModel'
 
 	# if you want independent or piped binary classifier
