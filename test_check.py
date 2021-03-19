@@ -1,6 +1,5 @@
 import torch
 import argparse
-import copy
 
 from model import Net
 from train import transform
@@ -10,69 +9,138 @@ from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
 
 # model: the model to be tested
 # testloader: containing the test data
-# desiredLabel: tensor of the label you want to pass to the second classifier
-def test_first_binary(model, testloader, desiredLabel, device='cuda'):
+# desiredLabel: tensor of the label you want to pass to the second classifier. this will also be the "positive"
+def test_first_binary(model, testloader, desiredLabel, device='cpu'):
     model.to(device)
     model.eval()
-    accuracy = 0
+    # accuracy = 0
 
     intermediate = []
     desiredLabel = desiredLabel.to(device)
+
+    TP, FP, FN, TN = 0, 0, 0, 0
 
     with torch.no_grad():
         for batch_idx, (images_data, target_labels, irrelevant) in enumerate(testloader):
             images_data, target_labels = images_data.to(device), target_labels.to(device)
             images_data = transform(images_data)
             output = model(images_data)
-            predicted_labels = torch.exp(output).max(dim=1)[1]
-            #print(predicted_labels)
-            equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
-            accuracy += equality.type(torch.FloatTensor).mean()
+            predicted_labels = torch.max(output, 1)[1] # get prediction
+            # equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
+            # accuracy += equality.type(torch.FloatTensor).mean()
 
-            # if classified to be the one we are interested in
-            if torch.equal(predicted_labels, desiredLabel):
-                intermediate.append([images_data, target_labels, irrelevant])
+            for j in range(images_data.size()[0]):
+                # if this is the sample with the label that we are interested in processing further
+                if torch.equal(predicted_labels[j], desiredLabel[0]):
 
-    print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
+                    # append to intermediate dataloader
+                    intermediate.append([images_data, target_labels, irrelevant])
+
+                    # true positive
+                    if torch.equal(target_labels[j].data.max(dim=0)[1], desiredLabel[0]):
+                        TP += 1
+
+                    # false positive
+                    else:
+                        FP += 1
+
+                # negative
+                else:
+                    # false negative
+                    if torch.equal(target_labels[j].data.max(dim=0)[1], desiredLabel[0]):
+                        FN += 1
+
+                    # true negative
+                    else:
+                        TN += 1
+
+    accuracy = (TP + TN) / len(testloader)
+    sensitivity = TP / (TP + FN) # WHAT WE WANT
+    specificity = TN / (TN + FP) # WHAT WE WANT
+    if (TP + FP) == 0:
+        ppv = 0
+    else:
+        ppv = TP / (TP + FP)  # how many positives were correct
+    if (TN + FN) == 0:
+        npv = 0
+    else:
+        npv = TN / (TN + FN) # how many negatives were correct
+    f1 = 2 * (ppv * sensitivity) / (ppv + sensitivity) #balance view of model
+    print(f"Total={len(testloader)}, TP={TP}, FP={FP}, FN={FN}, TN={TN}")
+    # print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
+    print('Testing Accuracy: {:.3f}'.format(accuracy))
+    print('Testing Sensitivity: {:.3f}'.format(sensitivity))
+    print('Testing Specificity: {:.3f}'.format(specificity))
+    print('Testing PPV: {:.3f}'.format(ppv))
+    print('Testing NPV: {:.3f}'.format(npv))
+    print('Testing F1 Score: {:.3f}'.format(f1))
 
     return intermediate
 
 
 # model: the model to be tested
 # testloader: containing the test data
+# desiredLabel: tensor of the label you want to track as positive. in this case it will be for true covid cases
 # target_label issue
-def test_second_binary(model, testloader, device='cuda'):
+def test_second_binary(model, testloader, desiredLabel, device='cpu'):
     model.to(device)
     model.eval()
     accuracy = 0
 
-    trueAccuracy = 0
-    trueCounter = 0
+    desiredLabel = desiredLabel.to(device)
 
-    covid = torch.tensor([0., 1.])
-    nocovid = torch.tensor([1., 0.])
-    covid = covid.to(device)
-    nocovid = nocovid.to(device)
+    TP, FP, FN, TN = 0, 0, 0, 0
 
     with torch.no_grad():
         for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
-            # target_labels[0] = torch.narrow(target_labels[0], 0, 1, 1)  # slicing the second bunch of labels
             target_labels = torch.narrow(target_labels[0], 0, 1, 2)  # slicing the second bunch of labels
             images_data, target_labels = images_data.to(device), target_labels.to(device)
-            images_data = transform(images_data)
+            # images_data = transform(images_data)
             output = model(images_data)
-            predicted_labels = torch.exp(output).max(dim=1)[1]
-            equality = (target_labels.data.max(dim=0)[1] == predicted_labels)
-            accuracy += equality.type(torch.FloatTensor).mean()
+            predicted_labels = torch.max(output, 1)[1]
 
-            # only for truly infected samples
-            if torch.equal(target_labels, covid) or torch.equal(target_labels, nocovid):
-                trueCounter += 1
-                trueEquality = (target_labels.data.max(dim=0)[1] == predicted_labels)
-                trueAccuracy += trueEquality.type(torch.FloatTensor).mean()
+            for j in range(images_data.size()[0]):
 
-    print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
-    print('True covid/noncovid accuracy: {:.3f}'. format(trueAccuracy / trueCounter))
+                if torch.equal(predicted_labels[j], desiredLabel[0]):
+
+                    # true positive
+                    if torch.equal(target_labels.data.max(dim=0)[1], desiredLabel[0]):
+                        TP += 1
+
+                    # false positive
+                    else:
+                        FP += 1
+
+                # negative
+                else:
+                    # false negative
+                    if torch.equal(target_labels.data.max(dim=0)[1], desiredLabel[0]):
+                        FN += 1
+
+                    # true negative
+                    else:
+                        TN += 1
+
+    accuracy = (TP + TN) / len(testloader)
+    sensitivity = TP / (TP + FN)  # WHAT WE WANT
+    specificity = TN / (TN + FP)  # WHAT WE WANT
+    if (TP + FP) == 0:
+        ppv = 0
+    else:
+        ppv = TP / (TP + FP)  # how many positives were correct
+    if (TN + FN) == 0:
+        npv = 0
+    else:
+        npv = TN / (TN + FN) # how many negatives were correct
+    f1 = 2 * (ppv * sensitivity) / (ppv + sensitivity)  # balance view of model
+    print(f"Total={len(testloader)}, TP={TP}, FP={FP}, FN={FN}, TN={TN}")
+    # print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
+    print('Testing Accuracy: {:.3f}'.format(accuracy))
+    print('Testing Sensitivity: {:.3f}'.format(sensitivity))
+    print('Testing Specificity: {:.3f}'.format(specificity))
+    print('Testing PPV: {:.3f}'.format(ppv))
+    print('Testing NPV: {:.3f}'.format(npv))
+    print('Testing F1 Score: {:.3f}'.format(f1))
 
 
 # original test function
@@ -92,15 +160,19 @@ def test_original(model, testloader, device='cuda'):
             # equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
             # accuracy += equality.type(torch.FloatTensor).mean()
             for j in range(images_data.size()[0]):
+
                 # True Positive (infected)
                 if predicted_labels[j] == 1 and torch.argmax(target_labels[j]) == 1:
                     TP += 1
+
                 # False Positive (should be normal)
                 elif predicted_labels[j] == 1 and torch.argmax(target_labels[j]) == 0:
                     FP += 1
+
                 # False Negative (should be infected)
                 elif predicted_labels[j] == 0 and torch.argmax(target_labels[j]) == 1:
                     FN += 1
+
                 # True Negative (normal)
                 elif predicted_labels[j] == 0 and torch.argmax(target_labels[j]) == 0:
                     TN += 1
@@ -255,6 +327,7 @@ def __get_trinary_test_dataset(img_size, batch_size):
 
 if __name__ == "__main__":
     args = get_args()
+    output_var = 2
 
     # set and load dataset spec
     img_size = (150, 150)
@@ -268,23 +341,26 @@ if __name__ == "__main__":
     independent = False
 
     # doing binary classifier
-    if args.output_var == 2:
+    # if args.output_var == 2:
+    if output_var == 2:
 
         if not independent:
 
             print("Starting: Normal piped binary classifier")
 
             # get test loader
+            # testloaderNormal = __get_binary_piped_test_dataset(img_size, args.batch_size)
             testloaderNormal = __get_binary_piped_test_dataset(img_size, 1)
 
             # define model
             model = Net(2)
 
             # fetch model saved state
-            model.load_state_dict(torch.load(normalCLFPath))
-            #model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
+            # model.load_state_dict(torch.load(normalCLFPath))
+            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
 
             # test and get the intermediate dataset for second classifier
+            # label (normal, infected)
             intermediateTestLoader = test_first_binary(model, testloaderNormal, torch.tensor([1.]).type(torch.int64))
 
             # looking into the contents of intermediate (the samples that got piped through
@@ -304,11 +380,12 @@ if __name__ == "__main__":
             print("Starting: Covid piped binary classifier")
 
             # fetch model saved state
-            model.load_state_dict(torch.load(covidCLFPath))
-            #model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
+            # model.load_state_dict(torch.load(covidCLFPath))
+            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
 
             # test and print
-            test_second_binary(model, intermediateTestLoader)
+            # label (noncovid, covid)
+            test_second_binary(model, intermediateTestLoader, torch.tensor([1.]).type(torch.int64))
 
         else:
             print("Starting: Normal independent binary classifier")
@@ -326,7 +403,8 @@ if __name__ == "__main__":
             model.load_state_dict(torch.load(covidCLFPath))
             test_original(model, covidIndependentTestloader)
 
-    elif args.output_var == 3:
+    # elif args.output_var == 3:
+    elif output_var == 3:
 
         print("Starting: Trinary classifier")
 

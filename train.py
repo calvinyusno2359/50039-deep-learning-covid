@@ -12,13 +12,13 @@ from torch.utils.data import DataLoader, ConcatDataset
 
 
 def transform(img_tensor):
-    transform = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(45),
-        transforms.Normalize(mean=[0.4824], std=[0.2363])
-    ])
+	transform = transforms.Compose([
+	  transforms.Normalize(mean=[0.4824], std=[0.2363]),
+		transforms.RandomHorizontalFlip(),
+		transforms.RandomRotation(45),
+	])
 
-    return transform(img_tensor)
+	return transform(img_tensor)
 
 
 def validate(model, validloader, weight, epoch, lowest_loss, savePath, device='cuda'):
