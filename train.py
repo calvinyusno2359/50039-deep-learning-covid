@@ -142,8 +142,8 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
 				   'val_infected': 8,
 				   }
 
-	valset_paths = {'val_normal': './dataset/test/normal',
-					'val_infected': './dataset/test/infected/covid',
+	valset_paths = {'val_normal': './dataset/val/normal',
+					'val_infected': './dataset/val/infected/covid',
 					}
 
 	valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
