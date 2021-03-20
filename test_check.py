@@ -89,6 +89,11 @@ def test_first_binary(model, testloader, desiredLabel, displayPrint, validation,
         print('Testing PPV: {:.3f}'.format(ppv))
         print('Testing NPV: {:.3f}'.format(npv))
         print('Testing F1 Score: {:.3f}'.format(f1))
+        print('Confusion Matrix')
+        print('          Predicted N | Predicted P')
+        print('         ---------------------------')
+        print('Ground N |   TN = {}  |   FP = {}   |').format(TN, FP)
+        print('Ground P |   FN = {}  |   TP = {}   |').format(FN, TP)
         print('\n')
 
     return intermediate, valid
@@ -158,6 +163,11 @@ def test_second_binary(model, testloader, desiredLabel, displayPrint, validation
         print('Testing PPV: {:.3f}'.format(ppv))
         print('Testing NPV: {:.3f}'.format(npv))
         print('Testing F1 Score: {:.3f}'.format(f1))
+        print('Confusion Matrix')
+        print('          Predicted N | Predicted P')
+        print('         ---------------------------')
+        print('Ground N |   TN = {}  |   FP = {}   |').format(TN, FP)
+        print('Ground P |   FN = {}  |   TP = {}   |').format(FN, TP)
         print('\n')
 
     return valid
@@ -228,6 +238,11 @@ def test_original(model, testloader, desiredLabel, displayPrint, validation, dev
         print('Testing PPV: {:.3f}'.format(ppv))
         print('Testing NPV: {:.3f}'.format(npv))
         print('Testing F1 Score: {:.3f}'.format(f1))
+        print('Confusion Matrix')
+        print('          Predicted N | Predicted P')
+        print('         ---------------------------')
+        print('Ground N |   TN = {}  |   FP = {}   |').format(TN, FP)
+        print('Ground P |   FN = {}  |   TP = {}   |').format(FN, TP)
         print('\n')
 
     return valid
