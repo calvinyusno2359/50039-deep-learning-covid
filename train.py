@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 
 from datetime import datetime
-from model import Xception
+from model import ResNet
 
 from torch import optim
 from torchvision import models, transforms
@@ -14,8 +14,9 @@ from torch.utils.data import DataLoader, ConcatDataset
 def transform(img_tensor):
     transform = transforms.Compose([
         transforms.Normalize(mean=[0.4824], std=[0.2363]),
-        transforms.RandomHorizontalFlip(),
+        transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomRotation(45),
+        transforms.RandomCrop(150)
     ])
 
     return transform(img_tensor)
@@ -79,7 +80,7 @@ def train(model, trainloader, weight, epoch, device='cuda'):
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
     # covid vs non-covid clf
-    weight = torch.tensor([1., 3.77])  # best [1., 3.77]
+    weight = torch.tensor([1., 1.]) # best [1., 3.77]
     img_size = (150, 150)
     class_dict = {0: 'non-covid', 1: 'covid'}
     train_groups = ['train']
@@ -91,7 +92,21 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
                       'train_covid': './dataset/train/infected/covid'
                       }
 
-    trainset = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+    trainset1 = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+
+    train_numbers = {'train_non-covid': 0,
+                     'train_covid': 1345 # oversample the minority
+                     }
+
+    trainset_paths = {'train_non-covid': './dataset/train/infected/non-covid',
+                      'train_covid': './dataset/train/infected/covid'
+                      }
+
+    trainset2 = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+
+    # load dataset
+    trainsets = ConcatDataset([trainset1, trainset2])
+    trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
 
     val_groups = ['val']
     val_numbers = {'val_non-covid': 8,
@@ -104,11 +119,9 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 
     valset = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    # load dataset
-    trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
     validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    model = Xception(2)
+    model = ResNet(2)
 
     lowest_loss = 9999
     for epoch in range(1, trainingEpochs + 1):
@@ -117,11 +130,11 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 
 
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
-    weight = torch.tensor([1., 2.8896])  # best [1., 2.8896]
+    weight = torch.tensor([1., 1.])  # best already
     img_size = (150, 150)
     class_dict = {0: 'normal', 1: 'infected'}
     groups = ['train']
-    dataset_numbers = {'train_normal': 0,
+    dataset_numbers = {'train_normal': 1341, # oversample the minority
                        'train_infected': 2530,
                        }
 
@@ -170,7 +183,7 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
     valsets = ConcatDataset([valset1, valset2])
     validationloader = DataLoader(valsets, batch_size=trainingBatchSize, shuffle=True)
 
-    model = Xception(2)
+    model = ResNet(2)
 
     lowest_loss = 9999
 
@@ -212,7 +225,7 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
     trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
     validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    model = Xception(3)
+    model = ResNet(3)
 
     lowest_loss = 9999
 
@@ -225,7 +238,7 @@ if __name__ == "__main__":
     now = datetime.now()
     timestamp = now.strftime("%d%m_%H%M")
 
-    normalTrainingEpochs = 12
+    normalTrainingEpochs = 16
     covidTrainingEpochs = 16
     trainingBatchSize = 8
     covidSavePath = f'models/binaryModelCovid{timestamp}'
@@ -235,4 +248,4 @@ if __name__ == "__main__":
     train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
     train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath)
 
-# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
+		# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)

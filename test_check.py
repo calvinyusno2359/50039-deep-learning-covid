@@ -2,10 +2,16 @@ import torch
 import argparse
 
 from model import ResNet
-from train import transform
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
+from torchvision import transforms
 
+def transform(img_tensor):
+    transform = transforms.Compose([
+        transforms.Normalize(mean=[0.4824], std=[0.2363]),
+    ])
+
+    return transform(img_tensor)
 
 # model: the model to be tested
 # testloader: containing the test data
@@ -23,7 +29,7 @@ def test_first_binary(model, testloader, desiredLabel, device='cpu'):
     with torch.no_grad():
         for batch_idx, (images_data, target_labels, irrelevant) in enumerate(testloader):
             images_data, target_labels = images_data.to(device), target_labels.to(device)
-            # images_data = transform(images_data)
+            images_data = transform(images_data)
             output = model(images_data)
             predicted_labels = torch.max(output, 1)[1] # get prediction
 
@@ -92,7 +98,7 @@ def test_second_binary(model, testloader, desiredLabel, device='cpu'):
         for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
             target_labels = torch.narrow(target_labels[0], 0, 1, 2)  # slicing the second bunch of labels
             images_data, target_labels = images_data.to(device), target_labels.to(device)
-            # images_data = transform(images_data)
+            images_data = transform(images_data)
             output = model(images_data)
             predicted_labels = torch.max(output, 1)[1]
 
@@ -330,8 +336,8 @@ if __name__ == "__main__":
     img_size = (150, 150)
 
     # model parameters
-    covidCLFPath = 'models/binaryModelCovidBest'
-    normalCLFPath = 'models/binaryModelNormalBest'
+    covidCLFPath = 'models/binaryModelCovid2103_0101_5'
+    normalCLFPath = 'models/binaryModelNormal2103_0101_11'
     trinaryCLFPath = 'models/trinaryModel'
 
     # if you want independent or piped binary classifier
@@ -397,6 +403,7 @@ if __name__ == "__main__":
 
             covidIndependentTestloader = __get_binary_covid_test_dataset(img_size, 1)
 
+            model = ResNet(2)
             model.load_state_dict(torch.load(covidCLFPath))
             test_original(model, covidIndependentTestloader)
 
