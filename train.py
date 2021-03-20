@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 
 from datetime import datetime
-from model import ResNet, Xception, MobileNetV2
+from model import Xception
 
 from torch import optim
 from torchvision import models, transforms
@@ -12,13 +12,13 @@ from torch.utils.data import DataLoader, ConcatDataset
 
 
 def transform(img_tensor):
-	transform = transforms.Compose([
-	  transforms.Normalize(mean=[0.4824], std=[0.2363]),
-		transforms.RandomHorizontalFlip(),
-		transforms.RandomRotation(45),
-	])
+    transform = transforms.Compose([
+        transforms.Normalize(mean=[0.4824], std=[0.2363]),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(45),
+    ])
 
-	return transform(img_tensor)
+    return transform(img_tensor)
 
 
 def validate(model, validloader, weight, epoch, lowest_loss, savePath, device='cuda'):
@@ -27,14 +27,16 @@ def validate(model, validloader, weight, epoch, lowest_loss, savePath, device='c
 
     test_loss = 0
     correct = 0
+    if weight is not None:
+        weight = weight.to(device)
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(validloader):
             target = np.argmax(target, axis=1)
             data, target = data.to(device), target.to(device)
             data = transform(data)
             output = model(data)
-            test_loss += F.nll_loss(output, target, weight=weight.to(device), reduction='sum').item()  # sum up batch loss
-            # test_loss += F.cross_entropy(output, target, weight=weight.to(device)).item()
+            # loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
+            test_loss += F.cross_entropy(output, target, weight=weight).item()
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
             test_loss /= len(validloader.dataset)
@@ -55,7 +57,8 @@ def train(model, trainloader, weight, epoch, device='cuda'):
     print(f'Train Epoch: {epoch}')
     model.to(device)
     model.train()
-
+    if weight is not None:
+        weight = weight.to(device)
     for batch_idx, (data, target) in enumerate(trainloader):
         target = np.argmax(target, axis=1)
         data, target = data.to(device), target.to(device)
@@ -63,8 +66,8 @@ def train(model, trainloader, weight, epoch, device='cuda'):
         optimizer = optim.Adadelta(model.parameters(), lr=0.001)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum')
-        # loss = F.cross_entropy(output, target, weight=weight.to(device))
+        # loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
+        loss = F.cross_entropy(output, target, weight=weight, reduction='sum')
         loss.backward()
         optimizer.step()
         # TODO Change Batch size printing
@@ -105,9 +108,7 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
     trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
     validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    # model = ResNet(2)
-    # model = Xception(2)
-    model = MobileNetV2(2)
+    model = Xception(2)
 
     lowest_loss = 9999
     for epoch in range(1, trainingEpochs + 1):
@@ -169,9 +170,7 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
     valsets = ConcatDataset([valset1, valset2])
     validationloader = DataLoader(valsets, batch_size=trainingBatchSize, shuffle=True)
 
-    # model = ResNet(2)
-    # model = Xception(2)
-    model = MobileNetV2(2)
+    model = Xception(2)
 
     lowest_loss = 9999
 
@@ -213,9 +212,7 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
     trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
     validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    # model = ResNet(3)
-    # model = Xception(3)
-    model = MobileNetV2(3)
+    model = Xception(3)
 
     lowest_loss = 9999
 

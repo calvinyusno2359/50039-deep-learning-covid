@@ -1,7 +1,7 @@
 import torch
 import argparse
 
-from model import Net
+from model import ResNet
 from train import transform
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
@@ -23,11 +23,9 @@ def test_first_binary(model, testloader, desiredLabel, device='cpu'):
     with torch.no_grad():
         for batch_idx, (images_data, target_labels, irrelevant) in enumerate(testloader):
             images_data, target_labels = images_data.to(device), target_labels.to(device)
-            images_data = transform(images_data)
+            # images_data = transform(images_data)
             output = model(images_data)
             predicted_labels = torch.max(output, 1)[1] # get prediction
-            # equality = (target_labels.data.max(dim=1)[1] == predicted_labels)
-            # accuracy += equality.type(torch.FloatTensor).mean()
 
             for j in range(images_data.size()[0]):
                 # if this is the sample with the label that we are interested in processing further
@@ -67,7 +65,6 @@ def test_first_binary(model, testloader, desiredLabel, device='cpu'):
         npv = TN / (TN + FN) # how many negatives were correct
     f1 = 2 * (ppv * sensitivity) / (ppv + sensitivity) #balance view of model
     print(f"Total={len(testloader)}, TP={TP}, FP={FP}, FN={FN}, TN={TN}")
-    # print('Testing Accuracy: {:.3f}'.format(accuracy / len(testloader)))
     print('Testing Accuracy: {:.3f}'.format(accuracy))
     print('Testing Sensitivity: {:.3f}'.format(sensitivity))
     print('Testing Specificity: {:.3f}'.format(specificity))
@@ -333,12 +330,12 @@ if __name__ == "__main__":
     img_size = (150, 150)
 
     # model parameters
-    covidCLFPath = 'models/binaryModelCovidBestSensitivity'
-    normalCLFPath = 'models/binaryModelNormalBestSensitivity'
+    covidCLFPath = 'models/binaryModelCovidBest'
+    normalCLFPath = 'models/binaryModelNormalBest'
     trinaryCLFPath = 'models/trinaryModel'
 
     # if you want independent or piped binary classifier
-    independent = False
+    independent = True
 
     # doing binary classifier
     # if args.output_var == 2:
@@ -353,7 +350,7 @@ if __name__ == "__main__":
             testloaderNormal = __get_binary_piped_test_dataset(img_size, 1)
 
             # define model
-            model = Net(2)
+            model = ResNet(2)
 
             # fetch model saved state
             # model.load_state_dict(torch.load(normalCLFPath))
@@ -392,7 +389,7 @@ if __name__ == "__main__":
 
             normalIndependentTestloader = __get_binary_normal_test_dataset(img_size, 1)
 
-            model = Net(2)
+            model = ResNet(2)
             model.load_state_dict(torch.load(normalCLFPath))
             test_original(model, normalIndependentTestloader)
 
