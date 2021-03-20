@@ -336,8 +336,8 @@ if __name__ == "__main__":
     img_size = (150, 150)
 
     # model parameters
-    covidCLFPath = 'models/binaryModelCovid2103_0101_5'
-    normalCLFPath = 'models/binaryModelNormal2103_0101_11'
+    covidCLFPath = 'models/binaryModelCovidBestSensitivity'
+    normalCLFPath = 'models/binaryModelNormalBestSensitivity'
     trinaryCLFPath = 'models/trinaryModel'
 
     # if you want independent or piped binary classifier

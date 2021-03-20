@@ -35,7 +35,6 @@ class ResNet(nn.Module):
 			nn.Flatten(),
 			# PrintLayer(),
 		)
-		self.fc = nn.Linear(128, num_classes)
 		self.fc2 = nn.Sequential(
 			nn.Linear(512, 256),
 			nn.Linear(256, 128),

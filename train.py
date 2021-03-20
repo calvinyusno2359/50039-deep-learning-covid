@@ -15,7 +15,7 @@ def transform(img_tensor):
     transform = transforms.Compose([
         transforms.Normalize(mean=[0.4824], std=[0.2363]),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(45),
+        transforms.RandomRotation(10),
         transforms.RandomCrop(150)
     ])
 
@@ -80,7 +80,7 @@ def train(model, trainloader, weight, epoch, device='cuda'):
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
     # covid vs non-covid clf
-    weight = torch.tensor([1., 1.]) # best [1., 3.77]
+    weight = torch.tensor([1., 1.15]) # best [1., 1.15]
     img_size = (150, 150)
     class_dict = {0: 'non-covid', 1: 'covid'}
     train_groups = ['train']
@@ -130,7 +130,7 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
 
 
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
-    weight = torch.tensor([1., 1.])  # best already
+    weight = torch.tensor([1., 1.2])  # best sensitivity
     img_size = (150, 150)
     class_dict = {0: 'normal', 1: 'infected'}
     groups = ['train']
@@ -238,14 +238,14 @@ if __name__ == "__main__":
     now = datetime.now()
     timestamp = now.strftime("%d%m_%H%M")
 
-    normalTrainingEpochs = 16
-    covidTrainingEpochs = 16
+    normalTrainingEpochs = 12
+    covidTrainingEpochs = 12
     trainingBatchSize = 8
     covidSavePath = f'models/binaryModelCovid{timestamp}'
     normalSavePath = f'models/binaryModelNormal{timestamp}'
     # trinarySavePath = f'models/trinaryModel{timestamp}'
 
-    train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
+    # train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
     train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath)
 
 		# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
