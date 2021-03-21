@@ -201,7 +201,7 @@ def test_original(model, testloader, desiredLabel, displayPrint, validation, dev
                 if torch.equal(predicted_labels[j], desiredLabel[0]):
 
                     # true positive
-                    if torch.equal(target_labels.data.max(dim=1)[1], desiredLabel[0]):
+                    if torch.equal(target_labels.data.max(dim=1)[1], desiredLabel):
                         TP += 1
 
                     # false positive
@@ -212,7 +212,7 @@ def test_original(model, testloader, desiredLabel, displayPrint, validation, dev
                 else:
 
                     # false negative
-                    if torch.equal(target_labels.data.max(dim=1)[1], desiredLabel[0]):
+                    if torch.equal(target_labels.data.max(dim=1)[1], desiredLabel):
                         FN += 1
 
                     # true negative
@@ -456,7 +456,7 @@ def __get_label(label, labelOrder):
 
 
 # displays the validation images
-def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
+def __display_validation(valset1, valset2, isIndependent, pos, device="cuda"):
 
     covid, noncovid, normal, infected = [], [], [], []
     pos = pos.to(device)
@@ -620,6 +620,12 @@ if __name__ == "__main__":
     independent = args.independent
     batch_size = args.batch_size
     displayPrint = args.print
+
+    # output_var = 2
+    # validation = 0
+    # independent = 0
+    # batch_size = 1
+    # displayPrint = 1
 
     # set and load dataset spec
     img_size = (150, 150)
