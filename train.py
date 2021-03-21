@@ -12,260 +12,258 @@ from torch.utils.data import DataLoader, ConcatDataset
 
 
 def transform(img_tensor):
-    transform = transforms.Compose([
-        transforms.Normalize(mean=[0.4824], std=[0.2363]),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(10),
-        transforms.RandomCrop(150)
-    ])
+	transform = transforms.Compose([
+		transforms.Normalize(mean=[0.4824], std=[0.2363]),
+		transforms.RandomHorizontalFlip(p=0.5),
+		transforms.RandomRotation(10),
+		transforms.RandomCrop(150)
+	])
 
-    return transform(img_tensor)
+	return transform(img_tensor)
 
 
 def validate(model, validloader, weight, epoch, lowest_loss, savePath, device='cuda'):
-    model.to(device)
-    model.eval()
+	model.to(device)
+	model.eval()
 
-    val_loss = 0
-    correct = 0
-    if weight is not None:
-        weight = weight.to(device)
-    with torch.no_grad():
-        for batch_idx, (data, target) in enumerate(validloader):
-            target = np.argmax(target, axis=1)
-            data, target = data.to(device), target.to(device)
-            data = transform(data)
-            output = model(data)
-            # loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
-            val_loss += F.cross_entropy(output, target, weight=weight).item()
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-            correct += pred.eq(target.view_as(pred)).sum().item()
+	val_loss = 0
+	correct = 0
+	if weight is not None:
+		weight = weight.to(device)
+	with torch.no_grad():
+		for batch_idx, (data, target) in enumerate(validloader):
+			target = np.argmax(target, axis=1)
+			data, target = data.to(device), target.to(device)
+			data = transform(data)
+			output = model(data)
+			# loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
+			val_loss += F.cross_entropy(output, target, weight=weight).item()
+			pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+			correct += pred.eq(target.view_as(pred)).sum().item()
 
-    val_loss /= len(validloader.dataset)
-    accuracy = 100. * correct / len(validloader.dataset)
-    print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        val_loss, correct, len(validloader.dataset),accuracy))
+	val_loss /= len(validloader.dataset)
+	accuracy = 100. * correct / len(validloader.dataset)
+	print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+	    val_loss, correct, len(validloader.dataset),accuracy))
 
-    if val_loss <= lowest_loss:
-        lowest_loss = val_loss
-        print(f'Found New Minima at epoch {epoch} loss: {lowest_loss}\n')
-        if savePath is not None:
-            torch.save(model.state_dict(), f'{savePath}_{epoch}')
+	if val_loss <= lowest_loss:
+		lowest_loss = val_loss
+		print(f'Found New Minima at epoch {epoch} loss: {lowest_loss}\n')
+		if savePath is not None:
+			torch.save(model.state_dict(), f'{savePath}_{epoch}')
 
-    return lowest_loss
+	return lowest_loss
 
 
 def train(model, trainloader, weight, epoch, quiet, device='cuda'):
-    print(f'Train Epoch: {epoch}')
-    model.to(device)
-    model.train()
+	print(f'Train Epoch: {epoch}')
+	model.to(device)
+	model.train()
 
-    train_loss = 0
-    if weight is not None:
-        weight = weight.to(device)
-    for batch_idx, (data, target) in enumerate(trainloader):
-        target = np.argmax(target, axis=1)
-        data, target = data.to(device), target.to(device)
-        data = transform(data)
-        optimizer = optim.Adadelta(model.parameters(), lr=0.001)
-        optimizer.zero_grad()
-        output = model(data)
-        # loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
-        loss = F.cross_entropy(output, target, weight=weight, reduction='sum')
-        train_loss += loss
-        loss.backward()
-        optimizer.step()
-        # TODO Change Batch size printing
-        if batch_idx % 250 == 0 and not quiet:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(trainloader.dataset),
-                       100. * batch_idx / len(trainloader), loss.item()))
+	train_loss = 0
+	if weight is not None:
+		weight = weight.to(device)
+	for batch_idx, (data, target) in enumerate(trainloader):
+		target = np.argmax(target, axis=1)
+		data, target = data.to(device), target.to(device)
+		data = transform(data)
+		optimizer = optim.Adadelta(model.parameters(), lr=0.001)
+		optimizer.zero_grad()
+		output = model(data)
+		# loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
+		loss = F.cross_entropy(output, target, weight=weight, reduction='sum')
+		train_loss += loss
+		loss.backward()
+		optimizer.step()
+		# TODO Change Batch size printing
+		if batch_idx % 50 == 0 and not quiet:
+			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+			    epoch, batch_idx * len(data), len(trainloader.dataset),
+			           100. * batch_idx / len(trainloader), loss.item()))
 
-    print('Train set: Average loss: {:.4f}'.format(train_loss / len(trainloader.dataset)))
+	print('Train set: Average loss: {:.4f}'.format(train_loss / len(trainloader.dataset)))
 
-    return train_loss / len(trainloader.dataset)
+	return train_loss / len(trainloader.dataset)
 
 
 def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath=None, weight=None, model=None, quiet=False):
-    # covid vs non-covid clf
-    weight = torch.tensor([1., 1.15]) # best [1., 1.15]
-    img_size = (150, 150)
-    class_dict = {0: 'non-covid', 1: 'covid'}
-    train_groups = ['train']
-    train_numbers = {'train_non-covid': 2530,
-                     'train_covid': 1345
-                     }
+	# covid vs non-covid clf
+	img_size = (150, 150)
+	class_dict = {0: 'non-covid', 1: 'covid'}
+	train_groups = ['train']
+	train_numbers = {'train_non-covid': 2530,
+	                 'train_covid': 1345
+	                 }
 
-    trainset_paths = {'train_non-covid': './dataset/train/infected/non-covid',
-                      'train_covid': './dataset/train/infected/covid'
-                      }
+	trainset_paths = {'train_non-covid': './dataset/train/infected/non-covid',
+	                  'train_covid': './dataset/train/infected/covid'
+	                  }
 
-    trainset1 = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset1 = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
-    train_numbers = {'train_non-covid': 0,
-                     'train_covid': 1345 # oversample the minority
-                     }
+	train_numbers = {'train_non-covid': 0,
+	                 'train_covid': 1345 # oversample the minority
+	                 }
 
-    trainset_paths = {'train_non-covid': './dataset/train/infected/non-covid',
-                      'train_covid': './dataset/train/infected/covid'
-                      }
+	trainset_paths = {'train_non-covid': './dataset/train/infected/non-covid',
+	                  'train_covid': './dataset/train/infected/covid'
+	                  }
 
-    trainset2 = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset2 = BinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
-    # load dataset
-    trainsets = ConcatDataset([trainset1, trainset2])
-    trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
+	# load dataset
+	trainsets = ConcatDataset([trainset1, trainset2])
+	trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
 
-    val_groups = ['val']
-    val_numbers = {'val_non-covid': 8,
-                   'val_covid': 8,
-                   }
+	val_groups = ['val']
+	val_numbers = {'val_non-covid': 8,
+	               'val_covid': 8,
+	               }
 
-    valset_paths = {'val_non-covid': './dataset/val/infected/non-covid',
-                    'val_covid': './dataset/val/infected/covid',
-                    }
+	valset_paths = {'val_non-covid': './dataset/val/infected/non-covid',
+	                'val_covid': './dataset/val/infected/covid',
+	                }
 
-    valset = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
+	validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    if model is not None:
-        model = model
-    else:
-        model = ResNet(2)
+	if model is not None:
+		model = model
+	else:
+		model = ResNet(2)
 
-    lowest_loss = 9999
-    start = datetime.now()
-    for epoch in range(1, trainingEpochs + 1):
-        train(model, trainloader, weight, epoch, quiet)
-        lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
+	lowest_loss = 9999
+	start = datetime.now()
+	for epoch in range(1, trainingEpochs + 1):
+		train(model, trainloader, weight, epoch, quiet)
+		lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
 
-    print(f'Time Elapsed: {datetime.now() - start}\n')
+	print(f'Time Elapsed: {datetime.now() - start}\n')
 
 
 def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath=None, weight=None, model=None, quiet=False):
-    # weight = torch.tensor([1., 2.8896])  # best [1., 2.8896]
-    img_size = (150, 150)
-    class_dict = {0: 'normal', 1: 'infected'}
-    groups = ['train']
-    dataset_numbers = {'train_normal': 1341, # oversample the minority
-                       'train_infected': 2530,
-                       }
+	# normal vs infected clf
+	img_size = (150, 150)
+	class_dict = {0: 'normal', 1: 'infected'}
+	groups = ['train']
+	dataset_numbers = {'train_normal': 1341, # oversample the minority
+	                   'train_infected': 2530,
+	                   }
 
-    dataset_paths = {'train_normal': './dataset/train/normal/',
-                     'train_infected': './dataset/train/infected/non-covid',
-                     }
+	dataset_paths = {'train_normal': './dataset/train/normal/',
+	                 'train_infected': './dataset/train/infected/non-covid',
+	                 }
 
-    trainset1 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	trainset1 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 
-    dataset_numbers = {'train_normal': 1341,
-                       'train_infected': 1345,
-                       }
+	dataset_numbers = {'train_normal': 1341,
+	                   'train_infected': 1345,
+	                   }
 
-    dataset_paths = {'train_normal': './dataset/train/normal/',
-                     'train_infected': './dataset/train/infected/covid',
-                     }
+	dataset_paths = {'train_normal': './dataset/train/normal/',
+	                 'train_infected': './dataset/train/infected/covid',
+	                 }
 
-    trainset2 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
+	trainset2 = BinaryClassDataset('train', img_size, class_dict, groups, dataset_numbers, dataset_paths)
 
-    # load dataset
-    trainsets = ConcatDataset([trainset1, trainset2])
-    trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
+	# load dataset
+	trainsets = ConcatDataset([trainset1, trainset2])
+	trainloader = DataLoader(trainsets, batch_size=trainingBatchSize, shuffle=True)
 
-    val_groups = ['val']
-    val_numbers = {'val_normal': 8,
-                   'val_infected': 8,
-                   }
+	val_groups = ['val']
+	val_numbers = {'val_normal': 8,
+	               'val_infected': 8,
+	               }
 
-    valset_paths = {'val_normal': './dataset/test/normal',
-                    'val_infected': './dataset/test/infected/covid',
-                    }
+	valset_paths = {'val_normal': './dataset/test/normal',
+	                'val_infected': './dataset/test/infected/covid',
+	                }
 
-    valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    valset_paths = {'val_normal': './dataset/val/normal',
-                    'val_infected': './dataset/val/infected/covid',
-                    }
+	valset_paths = {'val_normal': './dataset/val/normal',
+	                'val_infected': './dataset/val/infected/covid',
+	                }
 
-    valset2 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset2 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    # load dataset
-    valsets = ConcatDataset([valset1, valset2])
-    validationloader = DataLoader(valsets, batch_size=trainingBatchSize, shuffle=True)
+	# load dataset
+	valsets = ConcatDataset([valset1, valset2])
+	validationloader = DataLoader(valsets, batch_size=trainingBatchSize, shuffle=True)
 
-    if model is not None:
-        model = model
-    else:
-        model = ResNet(2)
+	if model is not None:
+		model = model
+	else:
+		model = ResNet(2)
 
-    lowest_loss = 9999
-    start = datetime.now()
-    for epoch in range(1, trainingEpochs + 1):
-        train(model, trainloader, weight, epoch, quiet)
-        lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
+	lowest_loss = 9999
+	start = datetime.now()
+	for epoch in range(1, trainingEpochs + 1):
+		train(model, trainloader, weight, epoch, quiet)
+		lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
 
-    print(f'Time Elapsed: {datetime.now() - start}\n')
+	print(f'Time Elapsed: {datetime.now() - start}\n')
 
 
 def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath=None, model=None, quiet=False):
-    img_size = (150, 150)
-    class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
-    train_groups = ['train']
-    train_numbers = {'train_normal': 1341,
-                     'train_infected': 2530,
-                     'train_covid': 1345
-                     }
+	img_size = (150, 150)
+	class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
+	train_groups = ['train']
+	train_numbers = {'train_normal': 1341,
+	                 'train_infected': 2530,
+	                 'train_covid': 1345
+	                 }
 
-    trainset_paths = {'train_normal': './dataset/train/normal',
-                      'train_infected': './dataset/train/infected/non-covid',
-                      'train_covid': './dataset/train/infected/covid'
-                      }
+	trainset_paths = {'train_normal': './dataset/train/normal',
+	                  'train_infected': './dataset/train/infected/non-covid',
+	                  'train_covid': './dataset/train/infected/covid'
+	                  }
 
-    trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
+	trainset = TrinaryClassDataset('train', img_size, class_dict, train_groups, train_numbers, trainset_paths)
 
-    val_groups = ['val']
-    val_numbers = {'val_normal': 234,
-                   'val_infected': 242,
-                   'val_covid': 139,
-                   }
+	val_groups = ['val']
+	val_numbers = {'val_normal': 234,
+	               'val_infected': 242,
+	               'val_covid': 139,
+	               }
 
-    valset_paths = {'val_normal': './dataset/test/normal/',
-                    'val_infected': './dataset/test/infected/non-covid',
-                    'val_covid': './dataset/test/infected/covid',
-                    }
+	valset_paths = {'val_normal': './dataset/test/normal/',
+	                'val_infected': './dataset/test/infected/non-covid',
+	                'val_covid': './dataset/test/infected/covid',
+	                }
 
-    valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
+	valset = TrinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    # load dataset
-    trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
-    validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
+	# load dataset
+	trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
+	validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    if model is not None:
-        model = model
-    else:
-        model = ResNet(3)
+	if model is not None:
+		model = model
+	else:
+		model = ResNet(3)
 
-    lowest_loss = 9999
-    start = datetime.now()
-    for epoch in range(1, trainingEpochs + 1):
-        train(model, trainloader, weight, epoch, quiet)
-        lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
+	lowest_loss = 9999
+	start = datetime.now()
+	for epoch in range(1, trainingEpochs + 1):
+		train(model, trainloader, weight, epoch, quiet)
+		lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
 
-    print(f'Time Elapsed: {datetime.now() - start}\n')
+	print(f'Time Elapsed: {datetime.now() - start}\n')
 
 
 if __name__ == "__main__":
-    now = datetime.now()
-    timestamp = now.strftime("%d%m_%H%M")
+	now = datetime.now()
+	timestamp = now.strftime("%d%m_%H%M")
 
-    normalTrainingEpochs = 12
-    covidTrainingEpochs = 12
-    trainingBatchSize = 8
-    covidSavePath = f'models/binaryModelCovid{timestamp}'
-    normalSavePath = f'models/binaryModelNormal{timestamp}'
-    # trinarySavePath = f'models/trinaryModel{timestamp}'
-
-    # train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
-    train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath)
-
-        # train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
+	normalTrainingEpochs = 12
+	covidTrainingEpochs = 12
+	trainingBatchSize = 8
+	covidSavePath = f'models/binaryModelCovid{timestamp}'
+	normalSavePath = f'models/binaryModelNormal{timestamp}'
+	# trinarySavePath = f'models/trinaryModel{timestamp}'
+	covidWeight = torch.tensor([1., 1.15])  # best [1., 1.15]
+	normalWeight = torch.tensor([1., 2.8896])  # best [1., 2.8896]
+	train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath, weight=normalWeight)
+	train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath, weight=covidWeight)

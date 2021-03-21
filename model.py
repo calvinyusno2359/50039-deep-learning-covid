@@ -1,11 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader
-
-import torch.nn as nn
 
 
 # ___________________________________________ Modified ResNet ___________________________________________ #
@@ -64,8 +61,8 @@ class ResBlock(nn.Module):
 		self.downsample = None
 		if stride != 1:
 			self.downsample = nn.Sequential(
-			    nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-			    nn.BatchNorm2d(out_channels),
+				nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+				nn.BatchNorm2d(out_channels),
 			)
 
 	def forward(self, x):
