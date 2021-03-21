@@ -27,7 +27,7 @@ def safe_division(a, b):
 # desiredLabel: tensor of the label you want to pass to the second classifier. this will also be the "positive"
 # displayPrint: bool to tell if the print statements are to be shown or not
 # validation: bool to return values into the validation set for display
-def test_first_binary(model, testloader, desiredLabel, displayPrint, validation, device='cpu'):
+def test_first_binary(model, testloader, desiredLabel, displayPrint, validation, device='cuda'):
     model.to(device)
     model.eval()
 
@@ -104,7 +104,7 @@ def test_first_binary(model, testloader, desiredLabel, displayPrint, validation,
 # desiredLabel: tensor of the label you want to track as positive. in this case it will be for true covid cases
 # displayPrint: bool to tell if the print statements are to be shown or not
 # validation: bool to return values into the validation set for display
-def test_second_binary(model, testloader, desiredLabel, displayPrint, validation, device='cpu'):
+def test_second_binary(model, testloader, desiredLabel, displayPrint, validation, device='cuda'):
     model.to(device)
     model.eval()
 
@@ -179,7 +179,7 @@ def test_second_binary(model, testloader, desiredLabel, displayPrint, validation
 # desiredLabel: tensor of the label you want to pass to the second classifier. this will also be the "positive"
 # displayPrint: bool to tell if the print statements are to be shown or not
 # validation: bool to return values into the validation set for display
-def test_original(model, testloader, desiredLabel, displayPrint, validation, device='cpu'):
+def test_original(model, testloader, desiredLabel, displayPrint, validation, device='cuda'):
     model.to(device)
     model.eval()
 
@@ -478,7 +478,7 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
         for j in range(len(valset1)):
             r1[j].imshow(valset1[j][0][0])
             r1[j].axis('off')
-            r1[j].set_title("{} -> {}".format(__get_label(valset1[j][1][0], ['n', 'i']), __get_label(valset1[j][2][0], ['n', 'i']), fontsize=4))
+            r1[j].set_title("{} -> {}".format(__get_label(valset1[j][1], ['n', 'i']), __get_label(valset1[j][2], ['n', 'i']), fontsize=4))
 
         for l in range(len(noncovid)):
             r2[l].imshow(noncovid[l][0][0])
@@ -530,7 +530,7 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
 
         # plot for normal vs infected validation
         print("displaying normal validation independent results in the format of (target) -> (predicted)")
-        f, (r1, r2) = plt.subplots(2, max(len(normal), len(infected)), squeeze=False, figsize=(15, 4))
+        f, (r1, r2) = plt.subplots(2, max(len(normal), len(infected)), squeeze=False, figsize=(20, 6))
         for j in range(len(normal)):
             r1[j].imshow(normal[j][0][0], interpolation='nearest')
             r1[j].axis('off')
@@ -553,7 +553,7 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
 
         # plot for covid vs noncovid validation
         print("displaying covid validation independent results in the format of (target) -> (predicted)")
-        f, (r3, r4) = plt.subplots(2, max(len(covid), len(noncovid)), squeeze=False, figsize=(15, 4))
+        f, (r3, r4) = plt.subplots(2, max(len(covid), len(noncovid)), squeeze=False, figsize=(20, 6))
         for m in range(len(covid)):
             r3[m].imshow(covid[m][0][0])
             r3[m].axis('off')
@@ -575,7 +575,7 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
                 # r4[j].set_visible(False)
 
     # Display full plot
-    plt.show()
+    plt.show(block=True)
 
 
 # trinary dataset
@@ -602,9 +602,9 @@ def __get_trinary_test_dataset(img_size, batch_size):
 
 def get_args(argv=None):
     parser = argparse.ArgumentParser(description="test image classifier model")
-    parser.add_argument("--independent", type=bool, default=True, help="true for independent, false for piped")
-    parser.add_argument("--validation", type=int, default=False, help="false for no validation, true for validation")
-    parser.add_argument("--print", type=bool, default=True, help="true to print stats, false otherwise")
+    parser.add_argument("--independent", type=int, default=1, help="1 for independent, 0 for piped")
+    parser.add_argument("--validation", type=int, default=0, help="0 for no validation, 1 for validation")
+    parser.add_argument("--print", type=int, default=1, help="1 to print stats, 0 otherwise")
     parser.add_argument("--output_var", type=int, default=2, help="number of output variables")
     parser.add_argument("--batch_size", type=int, default=1, help="set testing batch size")
     parser.add_argument("--gpu", action="store_const", const="cuda", default="cuda", help="use gpu")
@@ -614,27 +614,21 @@ def get_args(argv=None):
 
 
 if __name__ == "__main__":
-    # args = get_args()
-    # output_var = args.output_var
-    # validation = args.validation
-    # independent = args.independent
-    # batch_size = args.batch_size
-    # displayPrint = args.display_print
-
-    output_var = 2
-    validation = True
-    independent = True
-    batch_size = 1
-    displayPrint = True
+    args = get_args()
+    output_var = args.output_var
+    validation = args.validation
+    independent = args.independent
+    batch_size = args.batch_size
+    displayPrint = args.print
 
     # set and load dataset spec
     img_size = (150, 150)
 
     # model parameters
-    # covidCLFPath = 'models/' + args.covidclf
-    # normalCLFPath = 'models/' + args.normalclf
-    covidCLFPath = 'models/' + 'binaryModelCovidBestSensitivity'
-    normalCLFPath = 'models/' + 'binaryModelNormalBestSensitivity'
+    covidCLFPath = 'models/' + args.covidclf
+    normalCLFPath = 'models/' + args.normalclf
+    # covidCLFPath = 'models/' + 'binaryModelCovidBestSensitivity'
+    # normalCLFPath = 'models/' + 'binaryModelNormalBestSensitivity'
 
     # doing binary classifier
     if output_var == 2:
@@ -647,13 +641,13 @@ if __name__ == "__main__":
 
             normalValidTestLoader = __get_binary_normal_valid_dataset(img_size, batch_size)
 
-            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(normalCLFPath))
             nvs1 = test_original(model, normalValidTestLoader, pos, displayPrint, validation) # normal vs infected
 
             print("Starting: Validation set on Covid Independent classifier")
 
             covidValidTestLoader = __get_binary_covid_valid_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(covidCLFPath))
             nvs2 = test_original(model, covidValidTestLoader, pos, displayPrint, validation)
 
             __display_validation(nvs1, nvs2, independent, pos)
@@ -662,11 +656,11 @@ if __name__ == "__main__":
             print("Starting: Validation set on Normal Piped classifier")
 
             normalPipedTestLoader = __get_binary_piped_valid_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(normalCLFPath))
             intermediate, nvs1 = test_first_binary(model, normalPipedTestLoader, pos, displayPrint, validation)
 
             print("Starting: Validation set on Covid Piped classifier")
-            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(covidCLFPath))
             nvs2 = test_second_binary(model, intermediate, pos, displayPrint, validation)
 
             __display_validation(nvs1, nvs2, independent, pos)
@@ -675,24 +669,24 @@ if __name__ == "__main__":
             print("Starting: Test set on Normal Independent classifier")
 
             normalIndependentTestLoader = __get_binary_normal_test_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(normalCLFPath))
             unused = test_original(model, normalIndependentTestLoader, pos, displayPrint, validation)
 
             print("Starting Test set on Covid Independent classifier")
 
             covidIndependentTestLoader = __get_binary_covid_test_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(covidCLFPath))
             unused = test_original(model, covidIndependentTestLoader, pos, displayPrint, validation)
 
         else:
             print("Starting: Test set on Normal Piped classifier")
 
             normalPipedTestLoader = __get_binary_piped_test_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(normalCLFPath))
             intermediate, unused = test_first_binary(model, normalPipedTestLoader, pos, displayPrint, validation)
 
             print("Starting: Test set on Covid Piped classifier")
-            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(covidCLFPath))
             unused = test_second_binary(model, intermediate, pos, displayPrint, validation)
 
     else:
