@@ -1,4 +1,8 @@
-from dataset import TrinaryClassDataset
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader
 
 import torch.nn as nn
@@ -6,55 +10,63 @@ import torch.nn as nn
 
 # ___________________________________________ Modified ResNet ___________________________________________ #
 class ResNet(nn.Module):
-    def __init__(self, num_classes=2):
-        super().__init__()
-        self.layers = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-            # PrintLayer(),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-            # PrintLayer(),
-            # layer1
-            ResBlock(64, 64),
-            ResBlock(64, 64),
-            # layer 2
-            ResBlock(64, 128, 2),
-            ResBlock(128, 128),
-            # layer 3
-            # ResBlock(128, 256, 2),
-            # ResBlock(256, 256),
-            # # layer 4
-            # ResBlock(256, 512, 2),
-            # ResBlock(512, 512),
-            nn.AdaptiveAvgPool2d((1, 1)),
-            # PrintLayer(),
-            nn.Flatten(),
-            # PrintLayer(),
-        )
-        self.fc = nn.Linear(128, num_classes)
+	def __init__(self, num_classes=2):
+		super().__init__()
+		self.layers = nn.Sequential(
+			nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False),
+			nn.BatchNorm2d(64),
+			nn.ReLU(inplace=True),
+			# PrintLayer(),
+			nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+			# PrintLayer(),
+			# layer1
+			ResBlock(64, 64),
+			ResBlock(64, 64),
+			# layer 2
+			ResBlock(64, 128, 2),
+			ResBlock(128, 128),
+			# layer 3
+			ResBlock(128, 256, 2),
+			ResBlock(256, 256),
+			# # layer 4
+			ResBlock(256, 512, 2),
+			ResBlock(512, 512),
+			nn.AdaptiveAvgPool2d((1, 1)),
+			# PrintLayer(),
+			nn.Flatten(),
+			# PrintLayer(),
+		)
+		self.fc2 = nn.Sequential(
+			nn.Linear(512, 256),
+			nn.Linear(256, 128),
+			nn.Dropout(p=0.25),
+			nn.Linear(128, 64),
+			nn.Dropout(p=0.25),
+			nn.Linear(64, num_classes)
+		)
 
-    def forward(self, x):
-        x = self.layers(x)
-        x = self.fc(x)
-        return x
+	def forward(self, x):
+		x = self.layers(x)
+		# print(x.shape)
+		x = self.fc2(x)
+		return x
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
-        super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_channels)
-        # print(stride)
-        self.downsample = None
-        if stride != 1:
-            self.downsample = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(out_channels),
-            )
+	def __init__(self, in_channels, out_channels, stride=1):
+		super().__init__()
+		self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+		self.bn1 = nn.BatchNorm2d(out_channels)
+		self.relu = nn.ReLU(inplace=True)
+		self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+		self.bn2 = nn.BatchNorm2d(out_channels)
+		# print(stride)
+		self.downsample = None
+		if stride != 1:
+			self.downsample = nn.Sequential(
+			    nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+			    nn.BatchNorm2d(out_channels),
+			)
 
     def forward(self, x):
         res = x
