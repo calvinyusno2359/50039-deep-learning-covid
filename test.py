@@ -471,10 +471,9 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
             else:
                 noncovid.append(valset2[i])
 
-        print("displaying validation piped results in the format of (target) -> (predicted)")
-
         # show all in same diagram
         f, (r1, r2, r3) = plt.subplots(3, max(max(len(covid), len(noncovid)), len(valset1)), squeeze=False, figsize=(20, 6))
+        f.suptitle('validation piped results in the format of (target) -> (predicted)', fontsize=16)
         for j in range(len(valset1)):
             r1[j].imshow(valset1[j][0][0])
             r1[j].axis('off')
@@ -529,8 +528,8 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
                 noncovid.append(valset2[j])
 
         # plot for normal vs infected validation
-        print("displaying normal validation independent results in the format of (target) -> (predicted)")
-        f, (r1, r2) = plt.subplots(2, max(len(normal), len(infected)), squeeze=False, figsize=(20, 6))
+        f, (r1, r2) = plt.subplots(2, max(len(normal), len(infected)), squeeze=False, figsize=(20, 4))
+        f.suptitle('normal validation independent results in the format of (target) -> (predicted)', fontsize=16)
         for j in range(len(normal)):
             r1[j].imshow(normal[j][0][0], interpolation='nearest')
             r1[j].axis('off')
@@ -552,8 +551,8 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
 #                 r2[j].set_visible(False)
 
         # plot for covid vs noncovid validation
-        print("displaying covid validation independent results in the format of (target) -> (predicted)")
         f, (r3, r4) = plt.subplots(2, max(len(covid), len(noncovid)), squeeze=False, figsize=(20, 6))
+        f.suptitle('covid validation independent results in the format of (target) -> (predicted)', fontsize=16)
         for m in range(len(covid)):
             r3[m].imshow(covid[m][0][0])
             r3[m].axis('off')
