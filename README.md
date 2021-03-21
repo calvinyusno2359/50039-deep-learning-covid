@@ -1,2 +1,3 @@
 # 50039-deep-learning-covid
-covid
+
+50039 Deep Learning 'Small' Project
