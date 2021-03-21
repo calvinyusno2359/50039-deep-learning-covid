@@ -264,6 +264,6 @@ if __name__ == "__main__":
 	normalSavePath = f'models/binaryModelNormal{timestamp}'
 	# trinarySavePath = f'models/trinaryModel{timestamp}'
 	covidWeight = torch.tensor([1., 1.15])  # best [1., 1.15]
-	normalWeight = torch.tensor([1., 2.8896])  # best [1., 2.8896]
+	normalWeight = torch.tensor([1., 1.1])  # best [1., 1.1]
 	train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath, weight=normalWeight)
 	train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath, weight=covidWeight)
