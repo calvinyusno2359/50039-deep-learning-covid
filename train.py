@@ -183,12 +183,8 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath=None, we
 
     valset1 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
 
-    val_numbers = {'val_normal': 0,
-                   'val_infected': 8,
-                   }
-
     valset_paths = {'val_normal': './dataset/val/normal',
-                    'val_infected': './dataset/val/infected/non-covid',
+                    'val_infected': './dataset/val/infected/covid',
                     }
 
     valset2 = BinaryClassDataset('val', img_size, class_dict, val_groups, val_numbers, valset_paths)
@@ -272,4 +268,4 @@ if __name__ == "__main__":
     # train_binary_normal_clf(normalTrainingEpochs, trainingBatchSize, normalSavePath)
     train_binary_covid_clf(covidTrainingEpochs, trainingBatchSize, covidSavePath)
 
-		# train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
+        # train_trinary_clf(trainingEpochs, trainingBatchSize, trinarySavePath)
