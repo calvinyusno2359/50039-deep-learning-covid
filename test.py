@@ -21,12 +21,6 @@ def transform(img_tensor):
 def safe_division(a, b):
     return a/b if b else 0
 
-def transform(img_tensor):
-    transform = transforms.Compose([
-        transforms.Normalize(mean=[0.4824], std=[0.2363]),
-    ])
-
-    return transform(img_tensor)
 
 # model: the model to be tested
 # testloader: containing the test data
@@ -98,8 +92,8 @@ def test_first_binary(model, testloader, desiredLabel, displayPrint, validation,
         print('Confusion Matrix')
         print('          Predicted N | Predicted P')
         print('         ---------------------------')
-        print('Ground N |   TN = {}  |   FP = {}   |').format(TN, FP)
-        print('Ground P |   FN = {}  |   TP = {}   |').format(FN, TP)
+        print('Ground N |   TN = {}  |   FP = {}   |'.format(TN, FP))
+        print('Ground P |   FN = {}  |   TP = {}   |'.format(FN, TP))
         print('\n')
 
     return intermediate, valid
@@ -172,8 +166,8 @@ def test_second_binary(model, testloader, desiredLabel, displayPrint, validation
         print('Confusion Matrix')
         print('          Predicted N | Predicted P')
         print('         ---------------------------')
-        print('Ground N |   TN = {}  |   FP = {}   |').format(TN, FP)
-        print('Ground P |   FN = {}  |   TP = {}   |').format(FN, TP)
+        print('Ground N |   TN = {}  |   FP = {}   |'.format(TN, FP))
+        print('Ground P |   FN = {}  |   TP = {}   |'.format(FN, TP))
         print('\n')
 
     return valid
@@ -247,8 +241,8 @@ def test_original(model, testloader, desiredLabel, displayPrint, validation, dev
         print('Confusion Matrix')
         print('          Predicted N | Predicted P')
         print('         ---------------------------')
-        print('Ground N |   TN = {}  |   FP = {}   |').format(TN, FP)
-        print('Ground P |   FN = {}  |   TP = {}   |').format(FN, TP)
+        print('Ground N |   TN = {}  |   FP = {}   |'.format(TN, FP))
+        print('Ground P |   FN = {}  |   TP = {}   |'.format(FN, TP))
         print('\n')
 
     return valid
@@ -461,6 +455,7 @@ def __get_label(label, labelOrder):
     return labelOrder[label]
 
 
+# displays the validation images
 def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
 
     covid, noncovid, normal, infected = [], [], [], []
@@ -544,7 +539,7 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
         for k in range(len(infected)):
             r2[k].imshow(infected[k][0][0])
             r2[k].axis('off')
-            r2[k].set_title("{} -> {}".format(__get_label(infected[j][1][0], ["nc", "c"]), __get_label(normal[j][2], ["nc", "c"]), fontsize=4))
+            r2[k].set_title("{} -> {}".format(__get_label(infected[j][1][0], ["n", "i"]), __get_label(normal[j][2], ["n", "i"]), fontsize=4))
 
         # tidying first figure
         if len(normal) < len(infected):
@@ -562,12 +557,12 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
         for m in range(len(covid)):
             r3[m].imshow(covid[m][0][0])
             r3[m].axis('off')
-            r3[m].set_title("{} -> {}".format(covid[m][1][0], covid[m][2]), fontsize=10)
+            r3[m].set_title("{} -> {}".format(__get_label(covid[m][1][0], ['nc', 'c']), __get_label(covid[m][2], ['nc', 'c']), fontsize=4))
 
         for l in range(len(noncovid)):
             r4[l].imshow(noncovid[l][0][0])
             r4[l].axis('off')
-            r4[l].set_title("{} -> {}".format(noncovid[l][1][0], covid[l][2]), fontsize=10)
+            r4[l].set_title("{} -> {}".format(__get_label(noncovid[l][1][0], ['nc', 'c']), __get_label(covid[l][2], ['nc', 'c']), fontsize=4))
 
         # tidying second figure
         if len(covid) < len(noncovid):
@@ -619,24 +614,32 @@ def get_args(argv=None):
 
 
 if __name__ == "__main__":
-    args = get_args()
-    output_var = args.output_var
-    validation = args.validation
-    independent = args.independent
-    batch_size = args.batch_size
-    displayPrint = args.display_print
+    # args = get_args()
+    # output_var = args.output_var
+    # validation = args.validation
+    # independent = args.independent
+    # batch_size = args.batch_size
+    # displayPrint = args.display_print
+
+    output_var = 2
+    validation = True
+    independent = True
+    batch_size = 1
+    displayPrint = True
 
     # set and load dataset spec
     img_size = (150, 150)
 
     # model parameters
-    covidCLFPath = 'models/' + args.covidclf
-    normalCLFPath = 'models/' + args.normalclf
+    # covidCLFPath = 'models/' + args.covidclf
+    # normalCLFPath = 'models/' + args.normalclf
+    covidCLFPath = 'models/' + 'binaryModelCovidBestSensitivity'
+    normalCLFPath = 'models/' + 'binaryModelNormalBestSensitivity'
 
     # doing binary classifier
     if output_var == 2:
 
-        model = RestNet(2)
+        model = ResNet(2)
         pos = torch.tensor([1]).type(torch.int64)
 
         if validation and independent:
@@ -691,7 +694,6 @@ if __name__ == "__main__":
             print("Starting: Test set on Covid Piped classifier")
             model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
             unused = test_second_binary(model, intermediate, pos, displayPrint, validation)
-
 
     else:
         print("output_var must be 2")
