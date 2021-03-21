@@ -1,11 +1,8 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
 from dataset import TrinaryClassDataset
 from torch.utils.data import DataLoader
 
 import torch.nn as nn
+
 
 # ___________________________________________ Modified ResNet ___________________________________________ #
 class ResNet(nn.Module):
@@ -73,44 +70,6 @@ class ResBlock(nn.Module):
         x += res
         x = self.relu(x)
         return x
-
-
-# ___________________________________________ Scrappy Residual Net (Used for testing) ___________________________________________ #
-
-class ScrappyNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.layers = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=7),
-            ResidualMod(),
-            ResidualMod(),
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.Linear(32, 2),
-        )
-
-    def forward(self, x):
-        print(x.shape)
-        return x
-        x = self.layers(x)
-        output = F.log_softmax(x, dim=1)
-        return output
-
-
-class ResidualMod(nn.Module):
-    def __init__(self, module):
-        super().__init__()
-        self.module = nn.Sequential(
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-        )
-
-    def forward(self, inputs):
-        return self.module(inputs) + inputs
-
 
 # ___________________________________________ Helper Functions ___________________________________________ #
 class PrintLayer(nn.Module):

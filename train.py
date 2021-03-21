@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn.functional as F
 
 from datetime import datetime
-from model import Xception
+from model import ResNet
 
 from torch import optim
 from torchvision import models, transforms
@@ -25,7 +25,7 @@ def validate(model, validloader, weight, epoch, lowest_loss, savePath, device='c
     model.to(device)
     model.eval()
 
-    test_loss = 0
+    val_loss = 0
     correct = 0
     if weight is not None:
         weight = weight.to(device)
@@ -36,27 +36,30 @@ def validate(model, validloader, weight, epoch, lowest_loss, savePath, device='c
             data = transform(data)
             output = model(data)
             # loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
-            test_loss += F.cross_entropy(output, target, weight=weight).item()
+            val_loss += F.cross_entropy(output, target, weight=weight).item()
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
-            test_loss /= len(validloader.dataset)
 
+    val_loss /= len(validloader.dataset)
+    accuracy = 100. * correct / len(validloader.dataset)
     print('Validation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(validloader.dataset),
-        100. * correct / len(validloader.dataset)))
+        val_loss, correct, len(validloader.dataset),accuracy))
 
-    if test_loss <= lowest_loss:
-        lowest_loss = test_loss
+    if val_loss <= lowest_loss:
+        lowest_loss = val_loss
         print(f'Found New Minima at epoch {epoch} loss: {lowest_loss}\n')
-        torch.save(model.state_dict(), f'{savePath}_{epoch}')
+        if savePath is not None:
+            torch.save(model.state_dict(), f'{savePath}_{epoch}')
 
     return lowest_loss
 
 
-def train(model, trainloader, weight, epoch, device='cuda'):
+def train(model, trainloader, weight, epoch, quiet, device='cuda'):
     print(f'Train Epoch: {epoch}')
     model.to(device)
     model.train()
+
+    train_loss = 0
     if weight is not None:
         weight = weight.to(device)
     for batch_idx, (data, target) in enumerate(trainloader):
@@ -68,18 +71,23 @@ def train(model, trainloader, weight, epoch, device='cuda'):
         output = model(data)
         # loss = F.nll_loss(output, target, weight=weight.to(device), reduction='sum') #trinary
         loss = F.cross_entropy(output, target, weight=weight, reduction='sum')
+        train_loss += loss
         loss.backward()
         optimizer.step()
         # TODO Change Batch size printing
-        if batch_idx % 100 == 0:
+        if batch_idx % 250 == 0 and not quiet:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(trainloader.dataset),
                        100. * batch_idx / len(trainloader), loss.item()))
 
+    print('Train set: Average loss: {:.4f}'.format(train_loss / len(trainloader.dataset)))
 
-def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
+    return train_loss / len(trainloader.dataset)
+
+
+def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath=None, weight=None, model=None, quiet=False):
     # covid vs non-covid clf
-    weight = torch.tensor([1., 3.77])  # best [1., 3.77]
+    # weight = torch.tensor([1., 3.77])  # best [1., 3.77]
     img_size = (150, 150)
     class_dict = {0: 'non-covid', 1: 'covid'}
     train_groups = ['train']
@@ -108,16 +116,22 @@ def train_binary_covid_clf(trainingEpochs, trainingBatchSize, savePath):
     trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
     validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    model = Xception(2)
+    if model is not None:
+        model = model
+    else:
+        model = ResNet(2)
 
     lowest_loss = 9999
+    start = datetime.now()
     for epoch in range(1, trainingEpochs + 1):
-        train(model, trainloader, weight, epoch)
+        train(model, trainloader, weight, epoch, quiet)
         lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
 
+    print(f'Time Elapsed: {datetime.now() - start}\n')
 
-def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
-    weight = torch.tensor([1., 2.8896])  # best [1., 2.8896]
+
+def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath=None, weight=None, model=None, quiet=False):
+    # weight = torch.tensor([1., 2.8896])  # best [1., 2.8896]
     img_size = (150, 150)
     class_dict = {0: 'normal', 1: 'infected'}
     groups = ['train']
@@ -170,16 +184,21 @@ def train_binary_normal_clf(trainingEpochs, trainingBatchSize, savePath):
     valsets = ConcatDataset([valset1, valset2])
     validationloader = DataLoader(valsets, batch_size=trainingBatchSize, shuffle=True)
 
-    model = Xception(2)
+    if model is not None:
+        model = model
+    else:
+        model = ResNet(2)
 
     lowest_loss = 9999
-
+    start = datetime.now()
     for epoch in range(1, trainingEpochs + 1):
-        train(model, trainloader, weight, epoch)
+        train(model, trainloader, weight, epoch, quiet)
         lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
 
+    print(f'Time Elapsed: {datetime.now() - start}\n')
 
-def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
+
+def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath=None, model=None, quiet=False):
     img_size = (150, 150)
     class_dict = {0: 'normal', 1: 'infected', 2: 'covid'}
     train_groups = ['train']
@@ -212,13 +231,18 @@ def train_trinary_clf(trainingEpochs, trainingBatchSize, savePath):
     trainloader = DataLoader(trainset, batch_size=trainingBatchSize, shuffle=True)
     validationloader = DataLoader(valset, batch_size=trainingBatchSize, shuffle=True)
 
-    model = Xception(3)
+    if model is not None:
+        model = model
+    else:
+        model = ResNet(3)
 
     lowest_loss = 9999
-
+    start = datetime.now()
     for epoch in range(1, trainingEpochs + 1):
-        train(model, trainloader, weight, epoch)
+        train(model, trainloader, weight, epoch, quiet)
         lowest_loss = validate(model, validationloader, weight, epoch, lowest_loss, savePath)
+
+    print(f'Time Elapsed: {datetime.now() - start}\n')
 
 
 if __name__ == "__main__":
