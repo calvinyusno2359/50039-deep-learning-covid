@@ -1,7 +1,7 @@
 import torch
 import argparse
 
-from model import Net
+from model import ResNet
 from torchvision import transforms
 from dataset import BinaryClassDataset, TrinaryClassDataset
 from torch.utils.data import DataLoader, ConcatDataset, ChainDataset
@@ -21,6 +21,12 @@ def transform(img_tensor):
 def safe_division(a, b):
     return a/b if b else 0
 
+def transform(img_tensor):
+    transform = transforms.Compose([
+        transforms.Normalize(mean=[0.4824], std=[0.2363]),
+    ])
+
+    return transform(img_tensor)
 
 # model: the model to be tested
 # testloader: containing the test data
@@ -117,7 +123,7 @@ def test_second_binary(model, testloader, desiredLabel, displayPrint, validation
         for batch_idx, (images_data, irrelevant, target_labels) in enumerate(testloader):
             target_labels = torch.narrow(target_labels[0], 0, 1, 2)  # slicing the second bunch of labels
             images_data, target_labels = images_data.to(device), target_labels.to(device)
-            # images_data = transform(images_data)
+            images_data = transform(images_data)
             output = model(images_data)
             predicted_labels = torch.max(output, 1)[1]
 
@@ -630,13 +636,14 @@ if __name__ == "__main__":
     # doing binary classifier
     if output_var == 2:
 
-        model = Net(2) # UPDATE NET
+        model = RestNet(2)
         pos = torch.tensor([1]).type(torch.int64)
 
         if validation and independent:
             print("Starting: Validation set on Normal Independent classifier")
 
             normalValidTestLoader = __get_binary_normal_valid_dataset(img_size, batch_size)
+
             model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
             nvs1 = test_original(model, normalValidTestLoader, pos, displayPrint, validation) # normal vs infected
 
