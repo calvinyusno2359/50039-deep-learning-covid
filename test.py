@@ -27,7 +27,7 @@ def safe_division(a, b):
 # desiredLabel: tensor of the label you want to pass to the second classifier. this will also be the "positive"
 # displayPrint: bool to tell if the print statements are to be shown or not
 # validation: bool to return values into the validation set for display
-def test_first_binary(model, testloader, desiredLabel, displayPrint, validation, device='cuda'):
+def test_first_binary(model, testloader, desiredLabel, displayPrint, validation, device='cpu'):
     model.to(device)
     model.eval()
 
@@ -104,7 +104,7 @@ def test_first_binary(model, testloader, desiredLabel, displayPrint, validation,
 # desiredLabel: tensor of the label you want to track as positive. in this case it will be for true covid cases
 # displayPrint: bool to tell if the print statements are to be shown or not
 # validation: bool to return values into the validation set for display
-def test_second_binary(model, testloader, desiredLabel, displayPrint, validation, device='cuda'):
+def test_second_binary(model, testloader, desiredLabel, displayPrint, validation, device='cpu'):
     model.to(device)
     model.eval()
 
@@ -179,7 +179,7 @@ def test_second_binary(model, testloader, desiredLabel, displayPrint, validation
 # desiredLabel: tensor of the label you want to pass to the second classifier. this will also be the "positive"
 # displayPrint: bool to tell if the print statements are to be shown or not
 # validation: bool to return values into the validation set for display
-def test_original(model, testloader, desiredLabel, displayPrint, validation, device='cuda'):
+def test_original(model, testloader, desiredLabel, displayPrint, validation, device='cpu'):
     model.to(device)
     model.eval()
 
@@ -456,7 +456,7 @@ def __get_label(label, labelOrder):
 
 
 # displays the validation images
-def __display_validation(valset1, valset2, isIndependent, pos, device="cuda"):
+def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
 
     covid, noncovid, normal, infected = [], [], [], []
     pos = pos.to(device)
@@ -647,13 +647,13 @@ if __name__ == "__main__":
 
             normalValidTestLoader = __get_binary_normal_valid_dataset(img_size, batch_size)
 
-            model.load_state_dict(torch.load(normalCLFPath))
+            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
             nvs1 = test_original(model, normalValidTestLoader, pos, displayPrint, validation) # normal vs infected
 
             print("Starting: Validation set on Covid Independent classifier")
 
             covidValidTestLoader = __get_binary_covid_valid_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(covidCLFPath))
+            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
             nvs2 = test_original(model, covidValidTestLoader, pos, displayPrint, validation)
 
             __display_validation(nvs1, nvs2, independent, pos)
@@ -662,11 +662,11 @@ if __name__ == "__main__":
             print("Starting: Validation set on Normal Piped classifier")
 
             normalPipedTestLoader = __get_binary_piped_valid_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(normalCLFPath))
+            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
             intermediate, nvs1 = test_first_binary(model, normalPipedTestLoader, pos, displayPrint, validation)
 
             print("Starting: Validation set on Covid Piped classifier")
-            model.load_state_dict(torch.load(covidCLFPath))
+            model.load_state_dict(torch.load(covidCLFPath, map_location=torch.device('cpu')))
             nvs2 = test_second_binary(model, intermediate, pos, displayPrint, validation)
 
             __display_validation(nvs1, nvs2, independent, pos)
@@ -675,24 +675,24 @@ if __name__ == "__main__":
             print("Starting: Test set on Normal Independent classifier")
 
             normalIndependentTestLoader = __get_binary_normal_test_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(normalCLFPath))
+            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
             unused = test_original(model, normalIndependentTestLoader, pos, displayPrint, validation)
 
             print("Starting Test set on Covid Independent classifier")
 
             covidIndependentTestLoader = __get_binary_covid_test_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(covidCLFPath))
+            model.load_state_dict(torch.load(covidCLFPath,map_location=torch.device('cpu')))
             unused = test_original(model, covidIndependentTestLoader, pos, displayPrint, validation)
 
         else:
             print("Starting: Test set on Normal Piped classifier")
 
             normalPipedTestLoader = __get_binary_piped_test_dataset(img_size, batch_size)
-            model.load_state_dict(torch.load(normalCLFPath))
+            model.load_state_dict(torch.load(normalCLFPath, map_location=torch.device('cpu')))
             intermediate, unused = test_first_binary(model, normalPipedTestLoader, pos, displayPrint, validation)
 
             print("Starting: Test set on Covid Piped classifier")
-            model.load_state_dict(torch.load(covidCLFPath))
+            model.load_state_dict(torch.load(covidCLFPath,map_location=torch.device('cpu')))
             unused = test_second_binary(model, intermediate, pos, displayPrint, validation)
 
     else:
