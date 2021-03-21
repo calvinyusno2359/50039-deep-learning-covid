@@ -539,7 +539,7 @@ def __display_validation(valset1, valset2, isIndependent, pos, device="cpu"):
         for k in range(len(infected)):
             r2[k].imshow(infected[k][0][0])
             r2[k].axis('off')
-            r2[k].set_title("{} -> {}".format(__get_label(infected[j][1][0], ["n", "i"]), __get_label(normal[j][2], ["n", "i"]), fontsize=4))
+            r2[k].set_title("{} -> {}".format(__get_label(infected[k][1][0], ["n", "i"]), __get_label(infected[k][2], ["n", "i"]), fontsize=4))
 
         # tidying first figure
         if len(normal) < len(infected):
